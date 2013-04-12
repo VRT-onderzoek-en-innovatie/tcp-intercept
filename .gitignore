@@ -1,0 +1,16 @@
+Makefile
+Makefile.in
+*.o
+*.a
+/config.h
+/config.h.in
+/configure
+/config.status
+/config.log
+/aclocal.m4
+/autom4te.cache
+/compile
+/depcomp
+/install-sh
+/missing
+.deps
