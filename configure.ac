@@ -9,6 +9,10 @@ AC_LANG([C++])
 
 # Check for options.
 ####################
+AC_ARG_ENABLE([useless],
+	AC_HELP_STRING([--enable-useless],[Enable useless build. When some features are missing, this build becomes useless. Normally ./configure will bail out with an error. This option turns these errors into warnings.]),
+	[enable_useless=$enableval],[enable_useless=no])
+
 AC_ARG_ENABLE([ipv6],
 	AC_HELP_STRING([--disable-ipv6],[Disable IPv6 support]),
 	[enable_ipv6=$enableval],[enable_ipv6=yes])
@@ -51,10 +55,14 @@ AS_IF([test x$enable_ipv6 == xyes], [
 		[#include <netinet/in.h>])
 	])
 
-AC_CHECK_DECL([IPPROTO_IP], [], [AC_MSG_ERROR([Couldn't find IPPROTO_IP option])], [
-#include <netinet/in.h>]) dnl '
-AC_CHECK_DECL([IP_TRANSPARENT], [], [AC_MSG_ERROR([Couldn't find IP_TRANSPARENT option])], [
-#include <netinet/in.h>]) dnl '
+AC_CHECK_DECL([IPPROTO_IP], [have_useful_build=no],
+		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IPPROTO_IP option])],
+			[AC_MSG_ERROR([Couldn't find IPPROTO_IP option])]), [
+#include <netinet/in.h>])
+AC_CHECK_DECL([IP_TRANSPARENT], [have_useful_build=no],
+		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IP_TRANSPARENT option])],
+			[AC_MSG_ERROR([Couldn't find IP_TRANSPARENT option])]), [
+#include <netinet/in.h>])
 
 # Checks for library functions.
 ###############################
@@ -83,3 +91,9 @@ ${PACKAGE_NAME} version ${PACKAGE_VERSION}
   IPv6: $enable_ipv6
 --------------------------------------------------------------------------------
 "
+
+AS_IF([test x$have_useful_build = xno], [
+		echo
+		echo "WARNING: THIS WILL RESULT IN A USELESS BUILD!!!"
+		echo
+	])
