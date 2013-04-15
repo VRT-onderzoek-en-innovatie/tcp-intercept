@@ -122,6 +122,10 @@ int main(int argc, char* argv[]) {
 					"                                  connections.\n"
 					"                                  host and port resolving can be bypassed by\n"
 					"                                  placing [] around them\n"
+					"                                  the special string \"client\" can be used to\n"
+					"                                  reuse the client's source address. Note that\n"
+					"                                  you should take care that the return packets\n"
+					"                                  pass through this process again!\n"
 					"  --log -l file                   Log to file\n"
 					;
 				exit(EX_USAGE);
@@ -196,7 +200,9 @@ int main(int argc, char* argv[]) {
 		*log << "Listening on " << (*bind_sa)[0].string() << "\n" << std::flush;
 	}
 
-	{ // Resolve client address
+	if( options.bind_addr_outgoing == "client" ) {
+		bind_addr_outgoing.reset(NULL);
+	} else { // Resolve client address
 		std::string host, port;
 
 		/* Address format is
