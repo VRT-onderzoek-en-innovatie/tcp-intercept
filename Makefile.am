@@ -1,1 +1,1 @@
-SUBDIRS = Socket src
+SUBDIRS = Socket Log src

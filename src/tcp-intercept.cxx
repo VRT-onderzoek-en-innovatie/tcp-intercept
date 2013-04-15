@@ -2,19 +2,21 @@
 
 #include <iostream>
 #include "../Socket/Socket.hxx"
+#include "../Log/TimestampLog.hxx"
 #include <netinet/in.h>
 #include <ev.h>
 
 const static unsigned short listen_port = 5000;
 const static bool connect_from_client_address = false;
 
+std::auto_ptr<std::ostream> log;
 
 void received_sigint(EV_P_ ev_signal *w, int revents) throw() {
-	std::cerr << "Received SIGINT, exiting\n" << std::flush;
+	*log << "Received SIGINT, exiting\n" << std::flush;
 	ev_break(EV_A_ EVUNLOOP_ALL);
 }
 void received_sigterm(EV_P_ ev_signal *w, int revents) throw() {
-	std::cerr << "Received SIGTERM, exiting\n" << std::flush;
+	*log << "Received SIGTERM, exiting\n" << std::flush;
 	ev_break(EV_A_ EVUNLOOP_ALL);
 }
 
@@ -23,11 +25,11 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
 	Socket client_socket = socket->accept(&client_addr);
-	std::cout << "Connection established from " << client_addr->string() << std::endl;
+	*log << "Connection established from " << client_addr->string() << "\n" << std::flush;
 
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
 	server_addr = client_socket.getsockname();
-	std::cout << "Connection established to   " << server_addr->string() << std::endl;
+	*log << "Connection established to   " << server_addr->string() << "\n" << std::flush;
 
 	Socket server_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
@@ -37,15 +39,17 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		server_socket.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
 #endif
 		server_socket.bind( *client_addr );
-		std::cout << "Bound server socket" << std::endl;
+		*log << "Bound server socket\n" << std::flush;
 	}
 
 	server_socket.connect( *server_addr );
-	std::cout << "Connected server socket" << std::endl;
+	*log << "Connected server socket\n" << std::flush;
 }
 
 int main(int argc, char* argv[]) {
 	Socket s_listen = Socket::socket(AF_INET, SOCK_STREAM, 0);
+
+	log.reset( new TimestampLog( std::cerr ) );
 
 #if HAVE_DECL_IP_TRANSPARENT
 	{
@@ -59,7 +63,7 @@ int main(int argc, char* argv[]) {
 
 	s_listen.bind(*bind_addr);
 	s_listen.listen(10);
-	std::cout << "Listening on " << bind_addr->string() << std::endl;
+	*log << "Listening on " << bind_addr->string() << "\n" << std::flush;
 
 	{
 		ev_signal ev_sigint_watcher;
@@ -74,10 +78,10 @@ int main(int argc, char* argv[]) {
 		ev_io_init( &e_listen, listening_socket_ready_for_read, s_listen, EV_READ );
 		ev_io_start( EV_DEFAULT_ &e_listen );
 
-		std::cout << "Setup done, starting event loop\n" << std::flush;
+		*log << "Setup done, starting event loop\n" << std::flush;
 		ev_run(EV_DEFAULT_ 0);
 	}
 
-	std::cout << "Exiting...\n";
+	*log << "Exiting...\n" << std::flush;
 	return 0;
 }

@@ -70,6 +70,7 @@ AC_CHECK_FUNCS([bzero socket strerror])
 AC_CONFIG_FILES([
 	Makefile
 	Socket/Makefile
+	Log/Makefile
 	src/Makefile
 	])
 AC_OUTPUT
