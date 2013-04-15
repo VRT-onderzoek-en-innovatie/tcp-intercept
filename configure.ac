@@ -17,10 +17,12 @@ AS_IF([test x$enable_ipv6 == xyes], [AC_DEFINE([ENABLE_IPV6],[1],[Define to 1 to
 # Checks for programs.
 ######################
 AC_PROG_CXX
+AC_PROG_CXXCPP
 AM_PROG_CC_C_O # per product options in Makefile.am
 
 # Checks for libraries.
 #######################
+AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
 
 # Checks for header files.
 ##########################
@@ -70,7 +72,7 @@ AC_OUTPUT
 
 echo "
 --------------------------------------------------------------------------------
-${PACKAGE_NAME} Version ${PACKAGE_VERSION}
+${PACKAGE_NAME} version ${PACKAGE_VERSION}
 
  Prefix:       '${prefix}'
  C Compiler:   '${CC} ${CFLAGS} ${CPPFLAGS}'
