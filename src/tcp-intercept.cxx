@@ -36,7 +36,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	if( connect_from_client_address ) {
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
-		server_socket.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+		server_socket.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
 #endif
 		server_socket.bind( *client_addr );
 		*log << "Bound server socket\n" << std::flush;
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 #if HAVE_DECL_IP_TRANSPARENT
 	{
 		int value = 1;
-		s_listen.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
 	}
 #endif
 

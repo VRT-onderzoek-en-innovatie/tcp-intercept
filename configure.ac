@@ -60,6 +60,10 @@ AC_CHECK_DECL([IP_TRANSPARENT], [AC_DEFINE([HAVE_DECL_IP_TRANSPARENT], [1], [IP_
 			[AC_MSG_ERROR([Couldn't find IP_TRANSPARENT option])]), [
 #include <netinet/in.h>])
 
+AC_CHECK_DECL([SOL_IP], [], [AC_DEFINE([SOL_IP], [IPPROTO_IP], [Workaround for OSes that don't support SOL_IP])], [
+#include <netinet/in.h>]) dnl '
+
+
 # Checks for library functions.
 ###############################
 AC_CHECK_FUNCS([bzero socket strerror])
