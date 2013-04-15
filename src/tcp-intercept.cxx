@@ -6,6 +6,7 @@
 #include <ev.h>
 
 const static unsigned short listen_port = 5000;
+const static bool connect_from_client_address = false;
 
 
 void received_sigint(EV_P_ ev_signal *w, int revents) throw() {
@@ -30,17 +31,15 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	Socket server_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
+	if( connect_from_client_address ) {
 #if HAVE_DECL_IP_TRANSPARENT
-	{
 		int value = 1;
 		server_socket.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
-	}
 #endif
+		server_socket.bind( *client_addr );
+		std::cout << "Bound server socket" << std::endl;
+	}
 
-	/*
-	server_socket.bind( *client_addr );
-	std::cout << "Bound server socket" << std::endl;
-	*/
 	server_socket.connect( *server_addr );
 	std::cout << "Connected server socket" << std::endl;
 }
