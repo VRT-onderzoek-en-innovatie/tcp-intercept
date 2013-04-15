@@ -7,26 +7,28 @@
 const static unsigned short listen_port = 5000;
 
 int main(int argc, char* argv[]) {
-	Socket s = Socket::socket(AF_INET, SOCK_STREAM, 0);
+	Socket listening_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 #if HAVE_DECL_IP_TRANSPARENT
-	int value = 1;
-	s.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+	{
+		int value = 1;
+		listening_socket.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+	}
 #endif
 
 	std::auto_ptr<SockAddr::SockAddr> bind_addr(
 		SockAddr::translate("0.0.0.0", listen_port) );
 
-	s.bind(*bind_addr);
-	s.listen(10);
+	listening_socket.bind(*bind_addr);
+	listening_socket.listen(10);
 	std::cout << "Listening on " << bind_addr->string() << std::endl;
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
-	Socket con = s.accept(&client_addr);
+	Socket client_socket = listening_socket.accept(&client_addr);
 	std::cout << "Connection established from " << client_addr->string() << std::endl;
 
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
-	server_addr = con.getsockname();
+	server_addr = client_socket.getsockname();
 	std::cout << "Connection established to   " << server_addr->string() << std::endl;
 
 	con.send("Hello world\n");
