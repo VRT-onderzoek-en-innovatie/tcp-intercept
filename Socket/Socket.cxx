@@ -57,6 +57,18 @@ Socket Socket::accept(std::auto_ptr<SockAddr::SockAddr> *client_address) throw(s
 	return s;
 }
 
+std::auto_ptr<SockAddr::SockAddr> Socket::getsockname() const throw(std::runtime_error) {
+	struct sockaddr_storage a;
+	socklen_t a_len = sizeof(a);
+	if( -1 == ::getsockname(m_socket, reinterpret_cast<sockaddr*>(&a), &a_len) ) {
+		std::ostringstream e;
+		e << "Could not getsockname(): " << strerror(errno);
+		throw std::runtime_error(e.str());
+	}
+	std::auto_ptr<SockAddr::SockAddr> addr( SockAddr::create(&a) );
+	return addr;
+}
+
 std::string Socket::recv(size_t const max_length ) throw(std::runtime_error) {
 	std::auto_ptr<char> buf( new char[max_length] );
 	ssize_t length = ::recv(m_socket, buf.get(), max_length, 0);

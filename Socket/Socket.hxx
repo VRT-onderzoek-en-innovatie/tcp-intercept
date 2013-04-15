@@ -60,6 +60,8 @@ public:
 	 */
 	Socket accept(std::auto_ptr<SockAddr::SockAddr> *client_address) throw(std::runtime_error);
 
+	std::auto_ptr<SockAddr::SockAddr> getsockname() const throw(std::runtime_error);
+
 	std::string recv(size_t const max_length = 4096) throw(std::runtime_error);
 	void send(std::string const &data) throw(std::runtime_error);
 
