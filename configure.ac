@@ -55,10 +55,6 @@ AS_IF([test x$enable_ipv6 == xyes], [
 		[#include <netinet/in.h>])
 	])
 
-AC_CHECK_DECL([IPPROTO_IP], [AC_DEFINE([HAVE_DECL_IPPROTO_IP], [1], [IPPROTO_IP is defined])],
-		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IPPROTO_IP option]);have_useful_build=no],
-			[AC_MSG_ERROR([Couldn't find IPPROTO_IP option])]), [
-#include <netinet/in.h>])
 AC_CHECK_DECL([IP_TRANSPARENT], [AC_DEFINE([HAVE_DECL_IP_TRANSPARENT], [1], [IP_TRANSPARENT is defined])],
 		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IP_TRANSPARENT option]);have_useful_build=no],
 			[AC_MSG_ERROR([Couldn't find IP_TRANSPARENT option])]), [
