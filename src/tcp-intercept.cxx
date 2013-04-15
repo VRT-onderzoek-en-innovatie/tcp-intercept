@@ -46,20 +46,20 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 }
 
 int main(int argc, char* argv[]) {
-	Socket listening_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
+	Socket s_listen = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 #if HAVE_DECL_IP_TRANSPARENT
 	{
 		int value = 1;
-		listening_socket.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+		s_listen.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
 	}
 #endif
 
 	std::auto_ptr<SockAddr::SockAddr> bind_addr(
 		SockAddr::translate("0.0.0.0", listen_port) );
 
-	listening_socket.bind(*bind_addr);
-	listening_socket.listen(10);
+	s_listen.bind(*bind_addr);
+	s_listen.listen(10);
 	std::cout << "Listening on " << bind_addr->string() << std::endl;
 
 	{
@@ -70,6 +70,12 @@ int main(int argc, char* argv[]) {
 		ev_signal_init( &ev_sigterm_watcher, received_sigterm, SIGTERM);
 		ev_signal_start( EV_DEFAULT_ &ev_sigterm_watcher);
 
+		ev_io e_listen;
+		e_listen.data = &s_listen;
+		ev_io_init( &e_listen, listening_socket_ready_for_read, s_listen, EV_READ );
+		ev_io_start( EV_DEFAULT_ &e_listen );
+
+		std::cout << "Setup done, starting event loop\n" << std::flush;
 		ev_run(EV_DEFAULT_ 0);
 	}
 
