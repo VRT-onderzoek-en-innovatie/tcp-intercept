@@ -57,7 +57,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	} else {
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
-		server_socket.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+		server_socket.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
 		server_socket.bind( *client_addr );
 		*log << "Connecting " << client_addr->string()
@@ -66,6 +66,11 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	*log << server_addr->string() << "\n" << std::flush;
 
 	server_socket.connect( *server_addr );
+
+	// TODO: keep client_socket around
+	// TODO: keep server_socket around
+	// TODO: connect these sockets
+	// TODO: make connect async
 }
 
 int main(int argc, char* argv[]) {
@@ -185,7 +190,7 @@ int main(int argc, char* argv[]) {
 
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
-		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
 
 		*log << "Listening on " << (*bind_sa)[0].string() << "\n" << std::flush;
@@ -214,7 +219,6 @@ int main(int argc, char* argv[]) {
 			std::cerr << "Can not bind to \"" << options.bind_addr_outgoing << "\": Could not resolve\n";
 			exit(EX_DATAERR);
 		} else if( bind_sa->size() > 1 ) {
-			// TODO: allow this
 			std::cerr << "Can not bind to \"" << options.bind_addr_outgoing << "\": Resolves to multiple entries:\n";
 			for( typeof(bind_sa->begin()) i = bind_sa->begin(); i != bind_sa->end(); i++ ) {
 				std::cerr << "  " << i->string() << "\n";
