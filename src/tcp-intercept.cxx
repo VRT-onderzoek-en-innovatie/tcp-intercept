@@ -31,8 +31,21 @@ int main(int argc, char* argv[]) {
 	server_addr = client_socket.getsockname();
 	std::cout << "Connection established to   " << server_addr->string() << std::endl;
 
-	con.send("Hello world\n");
-	std::cout << "Received:\n" << con.recv();
+	Socket server_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
+
+#if HAVE_DECL_IP_TRANSPARENT
+	{
+		int value = 1;
+		server_socket.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+	}
+#endif
+
+	server_socket.bind( *client_addr );
+	std::cout << "Bound server socket" << std::endl;
+	server_socket.connect( *server_addr );
+	std::cout << "Connected server socket" << std::endl;
+
+	sleep(5);
 
 	std::cout << "Exiting...\n";
 	return 0;
