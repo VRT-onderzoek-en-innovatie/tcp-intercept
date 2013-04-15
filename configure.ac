@@ -1,6 +1,8 @@
 AC_PREREQ(2.61)
 AC_INIT([tcp-intercept], [0.0.1], [])
 AM_INIT_AUTOMAKE([dist-bzip2 -Wall])
+LT_INIT
+
 AC_CONFIG_SRCDIR([src/tcp-intercept.cxx])
 AC_CONFIG_HEADERS([config.h])
 AC_LANG([C++])
@@ -15,7 +17,6 @@ AS_IF([test x$enable_ipv6 == xyes], [AC_DEFINE([ENABLE_IPV6],[1],[Define to 1 to
 # Checks for programs.
 ######################
 AC_PROG_CXX
-AC_PROG_RANLIB
 AM_PROG_CC_C_O # per product options in Makefile.am
 
 # Checks for libraries.

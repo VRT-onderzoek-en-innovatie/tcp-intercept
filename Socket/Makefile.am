@@ -1,4 +1,4 @@
-noinst_LIBRARIES = libSocket.a
+noinst_LTLIBRARIES = libSocket.la
 
-libSocket_a_SOURCES = Socket.cxx Socket.hxx \
+libSocket_la_SOURCES = Socket.cxx Socket.hxx \
                       SockAddr.cxx SockAddr.hxx
