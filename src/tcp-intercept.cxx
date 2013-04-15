@@ -1,3 +1,5 @@
+#include "../config.h"
+
 #include <iostream>
 #include "../Socket/Socket.hxx"
 #include <netinet/in.h>
@@ -7,9 +9,11 @@ const static unsigned short listen_port = 5000;
 int main(int argc, char* argv[]) {
 	Socket s = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
-#if HAVE_DECL_IPPROTO_IP && HAVE_DECL_IP_TRANSPARENT
+#if HAVE_DECL_IPPROTO_IP
+#if HAVE_DECL_IP_TRANSPARENT
 	int value = 1;
 	s.setsockopt(IPPROTO_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
+#endif
 #endif
 
 	std::auto_ptr<SockAddr::SockAddr> bind_addr(

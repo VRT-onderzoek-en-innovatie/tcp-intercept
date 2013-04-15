@@ -45,22 +45,22 @@ AC_TYPE_SSIZE_T
 
 # Check for the sin_len field in sockaddr_in
 AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
-	[AC_DEFINE([SOCKADDR_IN_HAS_LEN_FIELD], [], [struct sockaddr_in has sin_len field])],
+	[AC_DEFINE([SOCKADDR_IN_HAS_LEN_FIELD], [1], [struct sockaddr_in has sin_len field])],
 	[],
 	[#include <netinet/in.h>])
 AS_IF([test x$enable_ipv6 == xyes], [
 	AC_CHECK_MEMBER([struct sockaddr_in6.sin6_len],
-		[AC_DEFINE([SOCKADDR_IN6_HAS_LEN_FIELD], [], [struct sockaddr_in6 has sin6_len field])],
+		[AC_DEFINE([SOCKADDR_IN6_HAS_LEN_FIELD], [1], [struct sockaddr_in6 has sin6_len field])],
 		[],
 		[#include <netinet/in.h>])
 	])
 
-AC_CHECK_DECL([IPPROTO_IP], [have_useful_build=no],
-		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IPPROTO_IP option])],
+AC_CHECK_DECL([IPPROTO_IP], [AC_DEFINE([HAVE_DECL_IPPROTO_IP], [1], [IPPROTO_IP is defined])],
+		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IPPROTO_IP option]);have_useful_build=no],
 			[AC_MSG_ERROR([Couldn't find IPPROTO_IP option])]), [
 #include <netinet/in.h>])
-AC_CHECK_DECL([IP_TRANSPARENT], [have_useful_build=no],
-		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IP_TRANSPARENT option])],
+AC_CHECK_DECL([IP_TRANSPARENT], [AC_DEFINE([HAVE_DECL_IP_TRANSPARENT], [1], [IP_TRANSPARENT is defined])],
+		AS_IF([test x$enable_useless == xyes],[AC_MSG_WARN([Couldn't find IP_TRANSPARENT option]);have_useful_build=no],
 			[AC_MSG_ERROR([Couldn't find IP_TRANSPARENT option])]), [
 #include <netinet/in.h>])
 
@@ -92,7 +92,7 @@ ${PACKAGE_NAME} version ${PACKAGE_VERSION}
 --------------------------------------------------------------------------------
 "
 
-AS_IF([test x$have_useful_build = xno], [
+AS_IF([test x$have_useful_build == xno], [
 		echo
 		echo "WARNING: THIS WILL RESULT IN A USELESS BUILD!!!"
 		echo
