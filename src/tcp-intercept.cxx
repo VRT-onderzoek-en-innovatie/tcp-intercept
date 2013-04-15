@@ -10,6 +10,7 @@
 #include "../Socket/Socket.hxx"
 #include "../Log/TimestampLog.hxx"
 
+static const size_t READ_SIZE = 4096;
 static const int MAX_CONN_BACKLOG = 32;
 
 std::string logfilename;
@@ -39,30 +40,32 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
 	Socket client_socket = socket->accept(&client_addr);
-	*log << "Connection established from " << client_addr->string() << "\n" << std::flush;
 
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
 	server_addr = client_socket.getsockname();
-	*log << "Connection established to   " << server_addr->string() << "\n" << std::flush;
+
+	*log << "Connection intercepted "
+	     << client_addr->string() << "-->"
+	     << server_addr->string() << "\n" << std::flush;
 
 	Socket server_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 	if( bind_addr_outgoing.get() == NULL ) {
 		server_socket.bind( *bind_addr_outgoing );
-		*log << "Bound server socket to " << bind_addr_outgoing->string()
-		     << "\n" << std::flush;
+		*log << "Connecting " << bind_addr_outgoing->string()
+		    << "-->";
 	} else {
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
 		server_socket.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value)); // TODO: IPPROTO_IPV6
 #endif
 		server_socket.bind( *client_addr );
-		*log << "Bound server socket to " << client_addr->string()
-		     << "\n" << std::flush;
+		*log << "Connecting " << client_addr->string()
+		    << "-->";
 	}
+	*log << server_addr->string() << "\n" << std::flush;
 
 	server_socket.connect( *server_addr );
-	*log << "Connected server socket\n" << std::flush;
 }
 
 int main(int argc, char* argv[]) {
@@ -223,7 +226,6 @@ int main(int argc, char* argv[]) {
 		*log << "Outgoing connections will connect from "
 		     << bind_addr_outgoing->string() << "\n" << std::flush;
 	}
-
 
 
 	{
