@@ -50,7 +50,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	Socket server_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
-	if( bind_addr_outgoing.get() == NULL ) {
+	if( bind_addr_outgoing.get() != NULL ) {
 		server_socket.bind( *bind_addr_outgoing );
 		*log << "Connecting " << bind_addr_outgoing->string()
 		    << "-->";
