@@ -72,9 +72,10 @@ echo "
 --------------------------------------------------------------------------------
 ${PACKAGE_NAME} Version ${PACKAGE_VERSION}
 
- Prefix: '${prefix}'
- Compiler: '${CC} ${CFLAGS} ${CPPFLAGS}'
- Libraries: '${LIBS}'
+ Prefix:       '${prefix}'
+ C Compiler:   '${CC} ${CFLAGS} ${CPPFLAGS}'
+ C++ Compiler: '${CXX} ${CXXFLAGS} ${CPPFLAGS}'
+ Libraries:    '${LIBS}'
 
  Configured with:
   IPv6: $enable_ipv6
