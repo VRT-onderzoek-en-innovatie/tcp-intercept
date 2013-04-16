@@ -2,6 +2,7 @@
 #include <sstream>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
 
 Socket Socket::socket(int const domain, int const type, int const protocol) throw(std::runtime_error) {
 	int s = ::socket(domain, type, protocol);
@@ -100,4 +101,38 @@ void Socket::setsockopt(int const level, int const optname, void *optval, sockle
 		e << "Could not setsockopt(): " << strerror(errno);
 		throw std::runtime_error(e.str());
 	}
+}
+
+bool Socket::non_blocking() throw(std::runtime_error) {
+	int flags = fcntl(m_socket, F_GETFL);
+	if( flags == -1 ) {
+		std::ostringstream e;
+		e << "Could not fcntl(, F_GETFL): " << strerror(errno);
+		throw std::runtime_error(e.str());
+	}
+	return flags | O_NONBLOCK;
+}
+bool Socket::non_blocking(bool new_state) throw(std::runtime_error) {
+	int flags = fcntl(m_socket, F_GETFL);
+	if( flags == -1 ) {
+		std::ostringstream e;
+		e << "Could not fcntl(, F_GETFL): " << strerror(errno);
+		throw std::runtime_error(e.str());
+	}
+	bool non_block_state = flags | O_NONBLOCK;
+
+	if( new_state ) {
+		flags |= O_NONBLOCK;
+	} else {
+		flags &= ~O_NONBLOCK;
+	}
+
+	int rv = fcntl(m_socket, F_SETFL, flags);
+	if( rv == -1 ) {
+		std::ostringstream e;
+		e << "Could not fcntl(, F_SETFL): " << strerror(errno);
+		throw std::runtime_error(e.str());
+	}
+
+	return non_block_state;
 }

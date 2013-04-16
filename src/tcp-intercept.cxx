@@ -130,7 +130,8 @@ int main(int argc, char* argv[]) {
 					;
 				exit(EX_USAGE);
 			case 'V':
-				std::cout << PACKAGE_STRING << "\n";
+				std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION
+				          << " (" << PACKAGE_GITREVISION << ")\n";
 				exit(EX_OK);
 			case 'f':
 				options.fork = false;

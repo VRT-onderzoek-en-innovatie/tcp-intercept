@@ -70,6 +70,14 @@ public:
 		int optval = state;
 		return this->setsockopt(SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 	}
+
+	/**
+	 * Get or set the non-blocking state of the socket
+	 * Both functions return the non-blocking state at the moment of the call
+	 * (i.e. before it is changed)
+	 */
+	bool non_blocking() throw(std::runtime_error);
+	bool non_blocking(bool new_state) throw(std::runtime_error);
 };
 
 #endif // __SOCKET_HPP__

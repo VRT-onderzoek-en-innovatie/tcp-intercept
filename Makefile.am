@@ -1,1 +1,2 @@
+EXTRA_DIST = GITREVISION
 SUBDIRS = Socket Log src

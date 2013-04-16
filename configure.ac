@@ -1,7 +1,20 @@
 AC_PREREQ(2.61)
-AC_INIT([tcp-intercept], [0.0.1], [])
+AC_INIT([tcp-intercept], [0.0.0], [])
 AM_INIT_AUTOMAKE([dist-bzip2 -Wall])
 LT_INIT
+
+AC_MSG_CHECKING([whether this is a Git repository])
+PACKAGE_GITREVISION=`git describe --tags HEAD 2>/dev/null`
+which git > /dev/null; \
+if test $? -ne 0 || test "x$PACKAGE_GITREVISION" = "x"; then
+	PACKAGE_GITREVISION="`cat $srcdir/GITREVISION`-cached"
+	AC_MSG_RESULT([no, using stored version info: $PACKAGE_GITREVISION])
+else
+	echo $PACKAGE_GITREVISION > $srcdir/GITREVISION
+	AC_MSG_RESULT([yes, current version info: $PACKAGE_GITREVISION])
+fi
+AC_SUBST(PACKAGE_GITREVISION)
+AC_DEFINE_UNQUOTED([PACKAGE_GITREVISION],["$PACKAGE_GITREVISION"],[Package version with Git revision info])
 
 AC_CONFIG_SRCDIR([src/tcp-intercept.cxx])
 AC_CONFIG_HEADERS([config.h])
@@ -31,7 +44,7 @@ AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
 # Checks for header files.
 ##########################
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h string.h strings.h sys/socket.h unistd.h sys/time.h])
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h string.h strings.h sys/socket.h unistd.h fcntl.h sys/time.h])
 AC_CHECK_HEADER([boost/ptr_container/ptr_vector.hpp], [], [AC_MSG_ERROR([Couldn't find boost library])], []) dnl '
 
 
