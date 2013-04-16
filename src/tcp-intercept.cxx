@@ -105,7 +105,16 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	}
 
 	ev_io_init( &new_con->e_s_connect, server_socket_connect_done, new_con->s_server, EV_WRITE );
-	new_con->e_s_connect.data = new_con.get();
+	ev_io_init( &new_con->e_c_read,  NULL, new_con->s_client, EV_READ );
+	ev_io_init( &new_con->e_c_write, NULL, new_con->s_client, EV_WRITE );
+	ev_io_init( &new_con->e_s_read,  NULL, new_con->s_server, EV_READ );
+	ev_io_init( &new_con->e_s_write, NULL, new_con->s_server, EV_WRITE );
+	new_con->e_s_connect.data =
+		new_con->e_c_read.data =
+		new_con->e_c_write.data =
+		new_con->e_s_read.data =
+		new_con->e_s_write.data =
+			new_con.get();
 	connections.push_back( new_con.release() );
 
 	try {
