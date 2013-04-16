@@ -12,7 +12,6 @@
 #include "../Socket/Socket.hxx"
 #include "../Log/TimestampLog.hxx"
 
-static const size_t READ_SIZE = 4096;
 static const int MAX_CONN_BACKLOG = 32;
 
 std::string logfilename;
