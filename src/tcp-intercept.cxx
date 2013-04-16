@@ -126,7 +126,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		if( e.error_number() == EINPROGRESS ) {
 			// connect() is started, wait for socket to become write-ready
 			// Have libev call the callback
-			ev_io_start( EV_DEFAULT_ &new_con->e_s_connect );
+			ev_io_start( EV_A_ &new_con->e_s_connect );
 
 		} else {
 			*log << "Error: " << e.what() << std::flush;
