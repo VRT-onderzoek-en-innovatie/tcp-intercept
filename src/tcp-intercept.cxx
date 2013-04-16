@@ -74,7 +74,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 }
 
 int main(int argc, char* argv[]) {
-	// Defaults
+	// Default options
 	struct {
 		bool fork;
 		std::string pid_file;
@@ -89,9 +89,9 @@ int main(int argc, char* argv[]) {
 	log.reset( new TimestampLog( std::cerr ) );
 
 	{ // Parse options
-		char optstring[] = "?hVfp:b:B:l:";
+		char optstring[] = "hVfp:b:B:l:";
 		struct option longopts[] = {
-			{"help",			no_argument, NULL, '?'},
+			{"help",			no_argument, NULL, 'h'},
 			{"version",			no_argument, NULL, 'V'},
 			{"forgeground",		no_argument, NULL, 'f'},
 			{"pid-file",		required_argument, NULL, 'p'},
@@ -128,7 +128,8 @@ int main(int argc, char* argv[]) {
 					"                                  pass through this process again!\n"
 					"  --log -l file                   Log to file\n"
 					;
-				exit(EX_USAGE);
+				if( opt == '?' ) exit(EX_USAGE);
+				exit(EX_OK);
 			case 'V':
 				std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION
 				          << " (" << PACKAGE_GITREVISION << ")\n";
