@@ -63,6 +63,8 @@ public:
 	std::string recv(size_t const max_length = 4096) throw(Errno);
 	void send(std::string const &data) throw(Errno,std::runtime_error);
 
+	void shutdown(int how) throw(Errno);
+
 
 	/**
 	 * {set,get}sockopt calls
