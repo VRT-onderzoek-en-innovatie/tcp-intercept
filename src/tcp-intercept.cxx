@@ -48,6 +48,22 @@ void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
 	*log << "Received SIGHUP, (re)opening this logfile\n" << std::flush;
 }
 
+void kill_connection(EV_P_ struct connection *con) {
+	// Remove from event loops
+	ev_io_stop(EV_A_ &con->e_c_read );
+	ev_io_stop(EV_A_ &con->e_c_write );
+	ev_io_stop(EV_A_ &con->e_s_read );
+	ev_io_stop(EV_A_ &con->e_s_write );
+
+	// Find and erase this connection in the list
+	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
+		if( &(*i) == con ) {
+			connections.erase(i);
+			break; // Stop searching
+		}
+	}
+}
+
 static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 
@@ -60,6 +76,8 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 
 	*log << "Connection seems fine\n" << std::flush;
 	// TODO: connect the client & server socket together
+
+	kill_connection(EV_A_ con);
 }
 
 static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
