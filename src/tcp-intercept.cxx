@@ -36,10 +36,10 @@ void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
 }
 
 static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
-	Socket* socket = reinterpret_cast<Socket*>( w->data );
+	Socket* s_listen = reinterpret_cast<Socket*>( w->data );
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
-	Socket client_socket = socket->accept(&client_addr);
+	Socket client_socket = s_listen->accept(&client_addr);
 
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
 	server_addr = client_socket.getsockname();
