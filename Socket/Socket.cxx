@@ -84,6 +84,12 @@ void Socket::setsockopt(int const level, int const optname, const void *optval, 
 	}
 }
 
+void Socket::getsockopt(int const level, int const optname, void *optval, socklen_t *optlen) throw(Errno) {
+	if( ::getsockopt(m_socket, level, optname, optval, optlen) == -1 ) {
+		throw Errno("Could not getsockopt()", errno);
+	}
+}
+
 bool Socket::non_blocking() throw(Errno) {
 	int flags = fcntl(m_socket, F_GETFL);
 	if( flags == -1 ) {
