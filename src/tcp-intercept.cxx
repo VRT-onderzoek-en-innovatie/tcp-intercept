@@ -56,6 +56,8 @@ void kill_connection(EV_P_ struct connection *con) {
 	ev_io_stop(EV_A_ &con->e_s_read );
 	ev_io_stop(EV_A_ &con->e_s_write );
 
+	*log << con->id << ": end\n" << std::flush;
+
 	// Find and erase this connection in the list
 	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
 		if( &(*i) == con ) {
