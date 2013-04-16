@@ -7,6 +7,8 @@
 #include <ev.h>
 #include <sysexits.h>
 
+#include <boost/ptr_container/ptr_list.hpp>
+
 #include "../Socket/Socket.hxx"
 #include "../Log/TimestampLog.hxx"
 
@@ -18,6 +20,17 @@ std::ofstream logfile;
 std::auto_ptr<std::ostream> log;
 
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
+
+struct connection {
+	Socket s_client;
+	Socket s_server;
+
+	ev_io e_s_connect;
+	ev_io e_c_read, e_c_write;
+	ev_io e_s_read, e_s_write;
+};
+boost::ptr_list< struct connection > connections;
+
 
 void received_sigint(EV_P_ ev_signal *w, int revents) throw() {
 	*log << "Received SIGINT, exiting\n" << std::flush;
@@ -35,43 +48,83 @@ void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
 	*log << "Received SIGHUP, (re)opening this logfile\n" << std::flush;
 }
 
+static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
+	struct connection* con = reinterpret_cast<struct connection*>( w->data );
+
+	ev_io_stop(EV_A_ &con->e_s_connect); // We connect only once
+
+	if( con->s_server.getsockopt_so_error() != 0 ) {
+		// TODO: Delete from connections[]?
+		*log << "Connection seems BAD\n" << std::flush;
+	}
+
+	*log << "Connection seems fine\n" << std::flush;
+	// TODO: connect the client & server socket together
+}
+
 static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	Socket* s_listen = reinterpret_cast<Socket*>( w->data );
 
+	std::auto_ptr<struct connection> new_con( new struct connection );
+
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
-	Socket s_client = s_listen->accept(&client_addr);
-
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
-	server_addr = s_client.getsockname();
+	try {
+		new_con->s_client = s_listen->accept(&client_addr);
 
-	*log << "Connection intercepted "
-	     << client_addr->string() << "-->"
-	     << server_addr->string() << "\n" << std::flush;
+		server_addr = new_con->s_client.getsockname();
 
-	Socket s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
+		*log << "Connection intercepted "
+			 << client_addr->string() << "-->"
+			 << server_addr->string() << "\n" << std::flush;
 
-	if( bind_addr_outgoing.get() != NULL ) {
-		s_server.bind( *bind_addr_outgoing );
-		*log << "Connecting " << bind_addr_outgoing->string()
-		    << "-->";
-	} else {
+		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
+
+		if( bind_addr_outgoing.get() != NULL ) {
+			new_con->s_server.bind( *bind_addr_outgoing );
+			*log << "Connecting " << bind_addr_outgoing->string()
+				<< "-->";
+		} else {
 #if HAVE_DECL_IP_TRANSPARENT
-		int value = 1;
-		s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
+			int value = 1;
+			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
-		s_server.bind( *client_addr );
-		*log << "Connecting " << client_addr->string()
-		    << "-->";
+			new_con->s_server.bind( *client_addr );
+			*log << "Connecting " << client_addr->string()
+				<< "-->";
+		}
+		*log << server_addr->string() << "\n" << std::flush;
+
+		new_con->s_server.non_blocking(true);
+	} catch( Errno &e ) {
+		*log << "Error: " << e.what() << std::flush;
+		return;
+		// Sockets will go out of scope, and close() themselves
 	}
-	*log << server_addr->string() << "\n" << std::flush;
 
-	s_server.connect( *server_addr );
+	ev_io_init( &new_con->e_s_connect, server_socket_connect_done, new_con->s_server, EV_WRITE );
+	new_con->e_s_connect.data = new_con.get();
+	connections.push_back( new_con.release() );
 
-	// TODO: keep client_socket around
-	// TODO: keep server_socket around
-	// TODO: connect these sockets
-	// TODO: make connect async
+	try {
+		new_con->s_server.connect( *server_addr );
+		// Connection succeeded right away, call the callback right away
+		server_socket_connect_done(EV_A_ &new_con->e_s_connect, 0);
+
+	} catch( Errno &e ) {
+		if( e.error_number() == EINPROGRESS ) {
+			// connect() is started, wait for socket to become write-ready
+			// Have libev call the callback
+			ev_io_start( EV_DEFAULT_ &new_con->e_s_connect );
+
+		} else {
+			*log << "Error: " << e.what() << std::flush;
+			return;
+			// Sockets will go out of scope, and close() themselves
+		}
+	}
 }
+
 
 int main(int argc, char* argv[]) {
 	// Default options
