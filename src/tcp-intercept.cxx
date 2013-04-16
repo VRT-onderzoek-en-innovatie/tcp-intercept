@@ -74,6 +74,8 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		server_addr = new_con->s_client.getsockname();
 
+		new_con->s_client.non_blocking(true);
+
 		*log << "Connection intercepted "
 			 << client_addr->string() << "-->"
 			 << server_addr->string() << "\n" << std::flush;
