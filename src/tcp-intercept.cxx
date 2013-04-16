@@ -39,33 +39,33 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	Socket* s_listen = reinterpret_cast<Socket*>( w->data );
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
-	Socket client_socket = s_listen->accept(&client_addr);
+	Socket s_client = s_listen->accept(&client_addr);
 
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
-	server_addr = client_socket.getsockname();
+	server_addr = s_client.getsockname();
 
 	*log << "Connection intercepted "
 	     << client_addr->string() << "-->"
 	     << server_addr->string() << "\n" << std::flush;
 
-	Socket server_socket = Socket::socket(AF_INET, SOCK_STREAM, 0);
+	Socket s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 	if( bind_addr_outgoing.get() != NULL ) {
-		server_socket.bind( *bind_addr_outgoing );
+		s_server.bind( *bind_addr_outgoing );
 		*log << "Connecting " << bind_addr_outgoing->string()
 		    << "-->";
 	} else {
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
-		server_socket.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
+		s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
-		server_socket.bind( *client_addr );
+		s_server.bind( *client_addr );
 		*log << "Connecting " << client_addr->string()
 		    << "-->";
 	}
 	*log << server_addr->string() << "\n" << std::flush;
 
-	server_socket.connect( *server_addr );
+	s_server.connect( *server_addr );
 
 	// TODO: keep client_socket around
 	// TODO: keep server_socket around
