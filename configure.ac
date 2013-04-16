@@ -46,6 +46,7 @@ AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h string.h strings.h sys/socket.h unistd.h fcntl.h sys/time.h])
 AC_CHECK_HEADER([boost/ptr_container/ptr_vector.hpp], [], [AC_MSG_ERROR([Couldn't find boost library])], []) dnl '
+AC_HEADER_TIME
 
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -84,7 +85,7 @@ AC_CHECK_DECL([SOL_IP], [], [AC_DEFINE([SOL_IP], [IPPROTO_IP], [Workaround for O
 
 # Checks for library functions.
 ###############################
-AC_CHECK_FUNCS([bzero socket strerror])
+AC_CHECK_FUNCS([bzero socket strerror gettimeofday])
 
 # AC_FUNC_STRFTIME
 # This macro is obsolescent, as no current systems require the intl library for
