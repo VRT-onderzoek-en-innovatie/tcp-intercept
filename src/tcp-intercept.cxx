@@ -119,8 +119,8 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	try {
 		new_con->s_server.connect( *server_addr );
-		// Connection succeeded right away, call the callback right away
-		server_socket_connect_done(EV_A_ &new_con->e_s_connect, 0);
+		// Connection succeeded right away, flag the callback right away
+		ev_feed_event(EV_A_ &new_con->e_s_connect, 0);
 
 	} catch( Errno &e ) {
 		if( e.error_number() == EINPROGRESS ) {
