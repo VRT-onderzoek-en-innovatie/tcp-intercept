@@ -9,8 +9,6 @@
 
 #include "SockAddr.hxx"
 
-struct connection;
-
 class Socket {
 private:
 	int m_socket;
