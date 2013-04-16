@@ -115,7 +115,6 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->e_s_read.data =
 		new_con->e_s_write.data =
 			new_con.get();
-	connections.push_back( new_con.release() );
 
 	try {
 		new_con->s_server.connect( *server_addr );
@@ -134,6 +133,8 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			// Sockets will go out of scope, and close() themselves
 		}
 	}
+
+	connections.push_back( new_con.release() );
 }
 
 
