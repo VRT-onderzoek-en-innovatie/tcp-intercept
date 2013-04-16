@@ -99,6 +99,7 @@ AC_CONFIG_FILES([
 	Socket/Makefile
 	Log/Makefile
 	src/Makefile
+	test/Makefile
 	])
 AC_OUTPUT
 
