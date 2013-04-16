@@ -69,15 +69,16 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 
 	ev_io_stop(EV_A_ &con->e_s_connect); // We connect only once
 
-	if( con->s_server.getsockopt_so_error() != 0 ) {
-		// TODO: Delete from connections[]?
-		*log << "Connection seems BAD\n" << std::flush;
+	Errno connect_error("connect()", con->s_server.getsockopt_so_error());
+	if( connect_error.error_number() != 0 ) {
+		*log << "Connection seems BAD: "
+		     << connect_error.what() << "\n" << std::flush;
+		kill_connection(EV_A_ con);
+		return;
 	}
 
 	*log << "Connection seems fine\n" << std::flush;
 	// TODO: connect the client & server socket together
-
-	kill_connection(EV_A_ con);
 }
 
 static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
