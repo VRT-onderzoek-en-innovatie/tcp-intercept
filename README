@@ -1,0 +1,20 @@
+tcp-intercept
+=============
+
+This program is designed to intercept TCP connections passing through this box.
+This can be set up using the TPROXY-target of iptables, together with the
+appropriate `ip route` setup. See kernel/Documentation/networking/tproxy.txt for
+details.
+
+
+Rationale
+---------
+
+The idea is to add perform TCP-acceleration on unaware endpoints. This
+acceleration can consist of using MultiPath-TCP, using another congestion
+control algorithm, or both.
+
+Other projects exist to simply add MPTCP-support to existing connections on the
+netfilter-layer. This is more performant, since it doesn't maintain any buffers.
+In order to change the congestion control however, intermediate buffers are
+needed.
