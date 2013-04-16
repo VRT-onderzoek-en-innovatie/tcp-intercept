@@ -2,11 +2,7 @@
 
 #include "TimestampLog.hxx"
 
-#if TM_IN_SYS_TIME
 #include <sys/time.h>
-#else
-#include <time.h>
-#endif
 
 #include <vector>
 #include <string>
@@ -23,13 +19,26 @@ int TimestampLogBuffer::overflow(int c) {
 }
 
 int TimestampLogBuffer::sync() {
-	time_t now_secs = time(NULL);
-	struct tm *now = localtime( &now_secs );
+	struct timeval tv_now;
+	std::string date_str;
 
-	std::vector<char> date(25);
-	int length = strftime(&date[0], date.size(), "%Y-%m-%dT%H:%M:%S%z", now);
-	std::string date_str( &date[0], length );
-	
+	if( -1 == gettimeofday(&tv_now, NULL) ) {
+		date_str = "gettimeofday() failed";
+	} else {
+		struct tm *now = localtime( &tv_now.tv_sec );
+		std::vector<char> date(20);
+		int length = strftime(&date[0], date.size(), "%Y-%m-%dT%H:%M:%S", now);
+		date_str.assign( &date[0], length );
+
+		std::ostringstream millisec;
+		millisec << "000000" << tv_now.tv_usec;
+		date_str.append(".");
+		date_str.append(millisec.str().substr( millisec.str().length()-6 ));
+
+		length = strftime(&date[0], date.size(), "%z", now);
+		date_str.append( &date[0], length );
+	}
+
 	m_output << date_str << " " << m_buffer.str() << std::flush;
 	m_buffer.str("");
 
