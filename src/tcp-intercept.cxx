@@ -22,6 +22,8 @@ std::auto_ptr<std::ostream> log;
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
 
 struct connection {
+	std::string id;
+
 	Socket s_client;
 	Socket s_server;
 
@@ -93,26 +95,30 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		server_addr = new_con->s_client.getsockname();
 
+		new_con->id.assign( client_addr->string() );
+		new_con->id.append( "-->" );
+		new_con->id.append( server_addr->string() );
+
 		new_con->s_client.non_blocking(true);
 
-		*log << "Connection intercepted "
-			 << client_addr->string() << "-->"
-			 << server_addr->string() << "\n" << std::flush;
+		*log << new_con->id << ": Connection intercepted\n" << std::flush;
 
 		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 		if( bind_addr_outgoing.get() != NULL ) {
 			new_con->s_server.bind( *bind_addr_outgoing );
-			*log << "Connecting " << bind_addr_outgoing->string()
-				<< "-->";
+			*log << new_con->id << ": Connecting "
+			     << bind_addr_outgoing->string()
+			     << "-->";
 		} else {
 #if HAVE_DECL_IP_TRANSPARENT
 			int value = 1;
 			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
 			new_con->s_server.bind( *client_addr );
-			*log << "Connecting " << client_addr->string()
-				<< "-->";
+			*log << new_con->id << ": Connecting "
+			     << client_addr->string()
+			     << "-->";
 		}
 		*log << server_addr->string() << "\n" << std::flush;
 
