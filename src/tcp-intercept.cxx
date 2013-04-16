@@ -21,8 +21,7 @@ std::auto_ptr<std::ostream> log;
 
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
 
-class Connection {
-public:
+struct connection {
 	Socket s_client;
 	Socket s_server;
 
@@ -30,7 +29,7 @@ public:
 	ev_io e_c_read, e_c_write;
 	ev_io e_s_read, e_s_write;
 };
-boost::ptr_list< Connection > connections;
+boost::ptr_list< struct connection > connections;
 
 
 void received_sigint(EV_P_ ev_signal *w, int revents) throw() {
@@ -49,7 +48,7 @@ void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
 	*log << "Received SIGHUP, (re)opening this logfile\n" << std::flush;
 }
 
-void kill_connection(EV_P_ Connection *con) {
+void kill_connection(EV_P_ struct connection *con) {
 	// Remove from event loops
 	ev_io_stop(EV_A_ &con->e_c_read );
 	ev_io_stop(EV_A_ &con->e_c_write );
@@ -66,7 +65,7 @@ void kill_connection(EV_P_ Connection *con) {
 }
 
 static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
-	Connection* con = reinterpret_cast<Connection*>( w->data );
+	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 
 	ev_io_stop(EV_A_ &con->e_s_connect); // We connect only once
 
@@ -85,7 +84,7 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	Socket* s_listen = reinterpret_cast<Socket*>( w->data );
 
-	std::auto_ptr<Connection> new_con( new Connection );
+	std::auto_ptr<struct connection> new_con( new struct connection );
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
