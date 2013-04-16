@@ -78,7 +78,7 @@ void Socket::send(std::string const &data) throw(Errno,std::runtime_error) {
 	}
 }
 
-void Socket::setsockopt(int const level, int const optname, void *optval, socklen_t optlen) throw(Errno) {
+void Socket::setsockopt(int const level, int const optname, const void *optval, socklen_t optlen) throw(Errno) {
 	if( ::setsockopt(m_socket, level, optname, optval, optlen) == -1 ) {
 		throw Errno("Could not setsockopt()", errno);
 	}

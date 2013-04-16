@@ -63,7 +63,7 @@ public:
 	std::string recv(size_t const max_length = 4096) throw(Errno);
 	void send(std::string const &data) throw(Errno,std::runtime_error);
 
-	void setsockopt(int const level, int const optname, void *optval, socklen_t optlen) throw(Errno);
+	void setsockopt(int const level, int const optname, const void *optval, socklen_t optlen) throw(Errno);
 	void set_reuseaddr(bool state = true) throw(Errno) {
 		int optval = state;
 		return this->setsockopt(SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
