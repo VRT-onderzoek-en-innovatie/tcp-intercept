@@ -3,10 +3,11 @@
 
 #include "../config.h"
 #include <netinet/in.h>
-#include <stdexcept>
 #include <memory>
 #include <string>
 #include <boost/ptr_container/ptr_vector.hpp>
+
+#include "Errno.hxx"
 
 namespace SockAddr {
 
@@ -38,6 +39,7 @@ std::auto_ptr<SockAddr> translate(std::string const &host, unsigned short const 
 
 std::auto_ptr< boost::ptr_vector< SockAddr > > resolve(std::string const &host, std::string const &service, int const family = 0, int const socktype = 0, int const protocol = 0, bool const v4_mapped = false);
 
+
 class Inet4 : public SockAddr {
 protected:
 	struct sockaddr_in m_addr;
@@ -50,11 +52,12 @@ public:
 
 	virtual operator struct sockaddr const*() const throw() { return reinterpret_cast<struct sockaddr const*>(&m_addr); }
 
-	virtual std::string string() const throw(std::runtime_error);
+	virtual std::string string() const throw(Errno);
 
 	virtual int const proto_family() const throw() { return PF_INET; }
 	virtual int const addr_family() const throw() { return AF_INET; }
 };
+
 
 class Inet6 : public SockAddr {
 protected:

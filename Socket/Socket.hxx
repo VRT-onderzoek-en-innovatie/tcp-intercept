@@ -4,9 +4,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <stdexcept>
 #include <string>
 
+#include "Errno.hxx"
 #include "SockAddr.hxx"
 
 class Socket {
@@ -35,20 +35,20 @@ public:
 	/*
 	 * Factory methods
 	 */
-	static Socket socket(int const domain, int const type, int const protocol) throw(std::runtime_error);
-	static Socket accept(int const socket, struct sockaddr *address, socklen_t *address_len) throw(std::runtime_error);
+	static Socket socket(int const domain, int const type, int const protocol) throw(Errno);
+	static Socket accept(int const socket, struct sockaddr *address, socklen_t *address_len) throw(Errno);
 
 	operator int() throw() { return m_socket; }
 
-	void bind(struct sockaddr const *address, socklen_t const address_len) throw(std::runtime_error);
-	void bind(SockAddr::SockAddr const &addr) throw(std::runtime_error) {
+	void bind(struct sockaddr const *address, socklen_t const address_len) throw(Errno);
+	void bind(SockAddr::SockAddr const &addr) throw(Errno) {
 		return this->bind(static_cast<struct sockaddr const*>(addr), addr.addr_len()); }
 
-	void connect(struct sockaddr const *address, socklen_t const address_len) throw(std::runtime_error);
-	void connect(SockAddr::SockAddr const &addr) throw(std::runtime_error) {
+	void connect(struct sockaddr const *address, socklen_t const address_len) throw(Errno);
+	void connect(SockAddr::SockAddr const &addr) throw(Errno) {
 		return this->connect(static_cast<struct sockaddr const*>(addr), addr.addr_len()); }
 	
-	void listen(int const backlog) throw(std::runtime_error);
+	void listen(int const backlog) throw(Errno);
 
 	/**
 	 * Accept a new connection on this socket (must be in listening mode)
@@ -56,15 +56,15 @@ public:
 	 * if client_address is not NULL, the target auto_ptr is reassigned to
 	 * own the SockAddr of the client.
 	 */
-	Socket accept(std::auto_ptr<SockAddr::SockAddr> *client_address) throw(std::runtime_error);
+	Socket accept(std::auto_ptr<SockAddr::SockAddr> *client_address) throw(Errno);
 
-	std::auto_ptr<SockAddr::SockAddr> getsockname() const throw(std::runtime_error);
+	std::auto_ptr<SockAddr::SockAddr> getsockname() const throw(Errno);
 
-	std::string recv(size_t const max_length = 4096) throw(std::runtime_error);
-	void send(std::string const &data) throw(std::runtime_error);
+	std::string recv(size_t const max_length = 4096) throw(Errno);
+	void send(std::string const &data) throw(Errno,std::runtime_error);
 
-	void setsockopt(int const level, int const optname, void *optval, socklen_t optlen) throw(std::runtime_error);
-	void set_reuseaddr(bool state = true) throw(std::runtime_error) {
+	void setsockopt(int const level, int const optname, void *optval, socklen_t optlen) throw(Errno);
+	void set_reuseaddr(bool state = true) throw(Errno) {
 		int optval = state;
 		return this->setsockopt(SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 	}
@@ -74,8 +74,8 @@ public:
 	 * Both functions return the non-blocking state at the moment of the call
 	 * (i.e. before it is changed)
 	 */
-	bool non_blocking() throw(std::runtime_error);
-	bool non_blocking(bool new_state) throw(std::runtime_error);
+	bool non_blocking() throw(Errno);
+	bool non_blocking(bool new_state) throw(Errno);
 };
 
 #endif // __SOCKET_HPP__

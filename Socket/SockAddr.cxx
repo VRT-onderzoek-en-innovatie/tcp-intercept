@@ -123,14 +123,12 @@ Inet4::Inet4(struct sockaddr_in const &addr) throw() {
 	m_addr.sin_addr.s_addr = addr.sin_addr.s_addr;
 }
 
-std::string Inet4::string() const throw(std::runtime_error) {
+std::string Inet4::string() const throw(Errno) {
 	std::string a("[");
 	{
 		char address[INET_ADDRSTRLEN];
 		if( inet_ntop(AF_INET, &m_addr.sin_addr, address, sizeof(address)) == NULL ) {
-			std::string e = "Could not convert IPv4 address to text: ";
-			e.append(strerror(errno));
-			throw std::runtime_error(e);
+			throw Errno("Could not convert IPv4 address to text", errno);
 		}
 		a.append(address);
 	}
@@ -140,11 +138,9 @@ std::string Inet4::string() const throw(std::runtime_error) {
 	{
 		char port[6];
 		int rv = snprintf(port, sizeof(port), "%d", ntohs(m_addr.sin_port));
-		assert( rv < sizeof(port) ); // unsigned shorts are always 5 digits or less
+		assert( rv < (signed)sizeof(port) ); // unsigned shorts are always 5 digits or less
 		if( rv == -1 ) {
-			std::string e = "Could not convert IPv4 address to text: ";
-			e.append(strerror(errno));
-			throw std::runtime_error(e);
+			throw Errno("Could not convert IPv4 address to text", errno);
 		}
 		a.append(port);
 	}
@@ -168,9 +164,7 @@ std::string Inet6::string() const throw(std::runtime_error) {
 	{
 		char address[INET6_ADDRSTRLEN];
 		if( inet_ntop(AF_INET6, &m_addr.sin6_addr, address, sizeof(address)) == NULL ) {
-			std::string e = "Could not convert IPv6 address to text: ";
-			e.append(strerror(errno));
-			throw std::runtime_error(e);
+			throw Errno("Could not convert IPv6 address to text", errno);
 		}
 		a.append(address);
 	}
@@ -180,11 +174,9 @@ std::string Inet6::string() const throw(std::runtime_error) {
 	{
 		char port[6];
 		int rv = snprintf(port, sizeof(port), "%d", ntohs(m_addr.sin6_port));
-		assert( rv < sizeof(port) ); // unsigned shorts are always 5 digits or less
+		assert( rv < (signed)sizeof(port) ); // unsigned shorts are always 5 digits or less
 		if( rv == -1 ) {
-			std::string e = "Could not convert IPv4 address to text: ";
-			e.append(strerror(errno));
-			throw std::runtime_error(e);
+			throw Errno("Could not convert IPv6 address to text", errno);
 		}
 		a.append(port);
 	}
