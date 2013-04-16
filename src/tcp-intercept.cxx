@@ -73,7 +73,7 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 
 	Errno connect_error("connect()", con->s_server.getsockopt_so_error());
 	if( connect_error.error_number() != 0 ) {
-		*log << "Connection seems BAD: "
+		*log << con->id << ": connect to server failed: "
 		     << connect_error.what() << "\n" << std::flush;
 		kill_connection(EV_A_ con);
 		return;
