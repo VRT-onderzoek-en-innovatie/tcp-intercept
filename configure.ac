@@ -31,7 +31,7 @@ AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
 # Checks for header files.
 ##########################
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h string.h strings.h sys/socket.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h string.h strings.h sys/socket.h unistd.h sys/time.h])
 AC_CHECK_HEADER([boost/ptr_container/ptr_vector.hpp], [], [AC_MSG_ERROR([Couldn't find boost library])], []) dnl '
 
 
@@ -63,10 +63,20 @@ AC_CHECK_DECL([IP_TRANSPARENT], [AC_DEFINE([HAVE_DECL_IP_TRANSPARENT], [1], [IP_
 AC_CHECK_DECL([SOL_IP], [], [AC_DEFINE([SOL_IP], [IPPROTO_IP], [Workaround for OSes that don't support SOL_IP])], [
 #include <netinet/in.h>]) dnl '
 
+#AC_STRUCT_TM
+# This macro is obsolescent, as time.h defines struct tm in current systems. New
+# programs need not use this macro.
+# source: http://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Particular-Structures.html#index-AC_005fSTRUCT_005fTM-685
+
 
 # Checks for library functions.
 ###############################
 AC_CHECK_FUNCS([bzero socket strerror])
+
+# AC_FUNC_STRFTIME
+# This macro is obsolescent, as no current systems require the intl library for
+# strftime. New programs need not use this macro.
+# source: http://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Particular-Functions.html#AC_FUNC_STRFTIME
 
 
 # Output

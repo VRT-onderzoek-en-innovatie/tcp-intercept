@@ -1,5 +1,13 @@
+#include "../config.h"
+
 #include "TimestampLog.hxx"
+
+#if TM_IN_SYS_TIME
 #include <sys/time.h>
+#else
+#include <time.h>
+#endif
+
 #include <vector>
 #include <string>
 
