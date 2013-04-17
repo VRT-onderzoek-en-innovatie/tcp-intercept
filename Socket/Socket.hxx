@@ -58,14 +58,14 @@ public:
 	 */
 	Socket accept(std::auto_ptr<SockAddr::SockAddr> *client_address) throw(Errno);
 
-	std::auto_ptr<SockAddr::SockAddr> getsockname() const throw(Errno);
-
 	std::string recv(size_t const max_length = 4096) throw(Errno);
 	ssize_t send(char const *data, size_t len) throw(Errno);
 	void send(std::string const &data) throw(Errno,std::runtime_error);
 
 	void shutdown(int how) throw(Errno);
 
+	std::auto_ptr<SockAddr::SockAddr> getsockname() const throw(Errno);
+	std::auto_ptr<SockAddr::SockAddr> getpeername() const throw(Errno);
 
 	/**
 	 * {set,get}sockopt calls

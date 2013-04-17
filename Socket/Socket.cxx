@@ -57,6 +57,16 @@ std::auto_ptr<SockAddr::SockAddr> Socket::getsockname() const throw(Errno) {
 	return addr;
 }
 
+std::auto_ptr<SockAddr::SockAddr> Socket::getpeername() const throw(Errno) {
+	struct sockaddr_storage a;
+	socklen_t a_len = sizeof(a);
+	if( -1 == ::getpeername(m_socket, reinterpret_cast<sockaddr*>(&a), &a_len) ) {
+		throw Errno("Could not getpeername()", errno);
+	}
+	std::auto_ptr<SockAddr::SockAddr> addr( SockAddr::create(&a) );
+	return addr;
+}
+
 std::string Socket::recv(size_t const max_length ) throw(Errno) {
 	std::auto_ptr<char> buf( new char[max_length] );
 	ssize_t length = ::recv(m_socket, buf.get(), max_length, 0);
