@@ -59,7 +59,7 @@ void kill_connection(EV_P_ struct connection *con) {
 	ev_io_stop(EV_A_ &con->e_s_read );
 	ev_io_stop(EV_A_ &con->e_s_write );
 
-	*log << con->id << ": end\n" << std::flush;
+	*log << con->id << ": closed\n" << std::flush;
 
 	// Find and erase this connection in the list
 	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
@@ -83,7 +83,14 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 		return;
 	}
 
-	*log << con->id << ": server accepted connection, splicing\n" << std::flush;
+	std::auto_ptr<SockAddr::SockAddr> my_addr;
+	std::auto_ptr<SockAddr::SockAddr> peer_addr;
+	my_addr = con->s_server.getsockname();
+	peer_addr = con->s_server.getpeername();
+
+	*log << con->id << ": server accepted connection "
+	     << my_addr->string() << "-->" << peer_addr->string()
+	     << ", splicing\n" << std::flush;
 	ev_io_start(EV_A_ &con->e_c_write);
 	ev_io_start(EV_A_ &con->e_s_write);
 }
@@ -126,7 +133,6 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
 				// Connection fully closed, clean up
-				*log << con->id << ": fully closed, cleaning up\n" << std::flush;
 				kill_connection(EV_A_ con);
 			}
 		} else { // read data
@@ -163,7 +169,6 @@ static void client_ready_read(EV_P_ ev_io *w, int revents) {
 	                       con->buf_c_to_s,
 	                       con->s_server, &con->e_s_write);
 }
-
 static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 	assert( w == &con->e_s_read );
