@@ -86,29 +86,59 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 	// TODO: activate some listeners
 }
 
-inline static void peer_ready_write(EV_P_ std::string const &id,
+inline static void peer_ready_write(EV_P_ struct connection* con,
                                     std::string const &dir,
                                     Socket &rx, ev_io *e_rx_read,
                                     std::string &buf,
                                     Socket &tx, ev_io *e_tx_write ) {
+	if( buf.length() == 0 ) {
+		// All is written, and we're still ready to write, read some more
+		ev_io_start( EV_A_ e_rx_read );
+		ev_io_stop( EV_A_ e_tx_write );
+		return;
+	}
+	// buf.length() > 0
+	try {
+		ssize_t rv = tx.send(buf.data(), buf.length());
+		assert( rv > 0 );
+		buf = buf.substr( rv );
+	} catch( Errno &e ) {
+		*log << con->id << " " << dir << ": " << e.what() << "\n" << std::flush;
+		kill_connection(EV_A_ con);
+	}
 }
-inline static void peer_ready_read(EV_P_ std::string const &id,
+inline static void peer_ready_read(EV_P_ struct connection* con,
                                    std::string const &dir,
                                    Socket &rx, ev_io *e_rx_read,
                                    std::string &buf,
                                    Socket &tx, ev_io *e_tx_write ) {
+	assert( buf.length() == 0 );
+	try {
+		buf = rx.recv();
+		ev_io_stop( EV_A_ e_rx_read );
+		if( buf.length() == 0 ) { // read EOF
+			tx.shutdown(SHUT_WR);
+		} else { // read data
+			ev_io_start( EV_A_ e_tx_write );
+		}
+	} catch( Errno &e ) {
+		*log << con->id << " " << dir << ": " << e.what() << "\n" << std::flush;
+		kill_connection(EV_A_ con);
+	}
 }
 
 static void client_ready_write(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-	return peer_ready_write(EV_A_ con->id, "S>C",
+	assert( w == &con->e_c_write );
+	return peer_ready_write(EV_A_ con, "S>C",
 	                        con->s_server, &con->e_s_read,
 	                        con->buf_s_to_c,
 	                        con->s_client, &con->e_c_write);
 }
 static void server_ready_write(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-	return peer_ready_write(EV_A_ con->id, "C>S",
+	assert( w == &con->e_s_write );
+	return peer_ready_write(EV_A_ con, "C>S",
 	                        con->s_client, &con->e_c_read,
 	                        con->buf_c_to_s,
 	                        con->s_server, &con->e_s_write);
@@ -116,7 +146,8 @@ static void server_ready_write(EV_P_ ev_io *w, int revents) {
 
 static void client_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-	return peer_ready_read(EV_A_ con->id, "C>S",
+	assert( w == &con->e_c_read );
+	return peer_ready_read(EV_A_ con, "C>S",
 	                       con->s_client, &con->e_c_read,
 	                       con->buf_c_to_s,
 	                       con->s_server, &con->e_s_write);
@@ -124,7 +155,8 @@ static void client_ready_read(EV_P_ ev_io *w, int revents) {
 
 static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-	return peer_ready_read(EV_A_ con->id, "S>C",
+	assert( w == &con->e_s_read );
+	return peer_ready_read(EV_A_ con, "S>C",
 	                       con->s_server, &con->e_s_read,
 	                       con->buf_s_to_c,
 	                       con->s_client, &con->e_c_write);
