@@ -106,7 +106,7 @@ AC_OUTPUT
 
 echo "
 --------------------------------------------------------------------------------
-${PACKAGE_NAME} version ${PACKAGE_VERSION}
+${PACKAGE_NAME} version ${PACKAGE_VERSION} (${PACKAGE_GITREVISION})
 
  Prefix:       '${prefix}'
  C Compiler:   '${CC} ${CFLAGS} ${CPPFLAGS}'
