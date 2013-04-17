@@ -83,13 +83,7 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 		return;
 	}
 
-	std::auto_ptr<SockAddr::SockAddr> my_addr;
-	std::auto_ptr<SockAddr::SockAddr> peer_addr;
-	my_addr = con->s_server.getsockname();
-	peer_addr = con->s_server.getpeername();
-
 	*log << con->id << ": server accepted connection "
-	     << my_addr->string() << "-->" << peer_addr->string()
 	     << ", splicing\n" << std::flush;
 	ev_io_start(EV_A_ &con->e_c_write);
 	ev_io_start(EV_A_ &con->e_s_write);
@@ -203,20 +197,13 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		if( bind_addr_outgoing.get() != NULL ) {
 			new_con->s_server.bind( *bind_addr_outgoing );
-			*log << new_con->id << ": Connecting "
-			     << bind_addr_outgoing->string()
-			     << "-->";
 		} else {
 #if HAVE_DECL_IP_TRANSPARENT
 			int value = 1;
 			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
 			new_con->s_server.bind( *client_addr );
-			*log << new_con->id << ": Connecting "
-			     << client_addr->string()
-			     << "-->";
 		}
-		*log << server_addr->string() << "\n" << std::flush;
 
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
@@ -255,6 +242,12 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			// Sockets will go out of scope, and close() themselves
 		}
 	}
+
+	std::auto_ptr<SockAddr::SockAddr> my_addr;
+	my_addr = new_con->s_server.getsockname();
+	*log << new_con->id << ": Connecting "
+	     << my_addr->string() << "-->" << server_addr->string()
+	     << "\n" << std::flush;
 
 	connections.push_back( new_con.release() );
 }
