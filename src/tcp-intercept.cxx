@@ -122,7 +122,6 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 		ev_io_stop( EV_A_ e_rx_read );
 		if( buf.length() == 0 ) { // read EOF
 			*log << con->id << " " << dir << ": EOF\n" << std::flush;
-			rx.shutdown(SHUT_RD);
 			tx.shutdown(SHUT_WR);
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
