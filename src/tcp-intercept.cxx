@@ -83,8 +83,7 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 		return;
 	}
 
-	*log << con->id << ": server accepted connection "
-	     << ", splicing\n" << std::flush;
+	*log << con->id << ": server accepted connection, splicing\n" << std::flush;
 	ev_io_start(EV_A_ &con->e_c_write);
 	ev_io_start(EV_A_ &con->e_s_write);
 }
