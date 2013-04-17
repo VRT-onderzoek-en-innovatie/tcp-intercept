@@ -29,6 +29,8 @@ struct connection {
 	ev_io e_s_connect;
 	ev_io e_c_read, e_c_write;
 	ev_io e_s_read, e_s_write;
+
+	std::string buf_c_to_s, buf_s_to_c;
 };
 boost::ptr_list< struct connection > connections;
 
@@ -84,28 +86,48 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 	// TODO: activate some listeners
 }
 
-static void client_ready_write(EV_P_ ev_io *w, int revents) {
-	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-
-	// TODO
+inline static void peer_ready_write(EV_P_ std::string const &id,
+                                    std::string const &dir,
+                                    Socket &rx, ev_io *e_rx_read,
+                                    std::string &buf,
+                                    Socket &tx, ev_io *e_tx_write ) {
+}
+inline static void peer_ready_read(EV_P_ std::string const &id,
+                                   std::string const &dir,
+                                   Socket &rx, ev_io *e_rx_read,
+                                   std::string &buf,
+                                   Socket &tx, ev_io *e_tx_write ) {
 }
 
+static void client_ready_write(EV_P_ ev_io *w, int revents) {
+	struct connection* con = reinterpret_cast<struct connection*>( w->data );
+	return peer_ready_write(EV_A_ con->id, "S>C",
+	                        con->s_server, &con->e_s_read,
+	                        con->buf_s_to_c,
+	                        con->s_client, &con->e_c_write);
+}
 static void server_ready_write(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-
-	// TODO
+	return peer_ready_write(EV_A_ con->id, "C>S",
+	                        con->s_client, &con->e_c_read,
+	                        con->buf_c_to_s,
+	                        con->s_server, &con->e_s_write);
 }
 
 static void client_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-
-	// TODO
+	return peer_ready_read(EV_A_ con->id, "C>S",
+	                       con->s_client, &con->e_c_read,
+	                       con->buf_c_to_s,
+	                       con->s_server, &con->e_s_write);
 }
 
 static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
-
-	// TODO
+	return peer_ready_read(EV_A_ con->id, "S>C",
+	                       con->s_server, &con->e_s_read,
+	                       con->buf_s_to_c,
+	                       con->s_client, &con->e_c_write);
 }
 
 
