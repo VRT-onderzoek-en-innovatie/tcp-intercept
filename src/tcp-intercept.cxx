@@ -83,7 +83,8 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 	}
 
 	*log << con->id << ": server accepted connection, splicing\n" << std::flush;
-	// TODO: activate some listeners
+	ev_io_start(EV_A_ &con->e_c_write);
+	ev_io_start(EV_A_ &con->e_s_write);
 }
 
 inline static void peer_ready_write(EV_P_ struct connection* con,
