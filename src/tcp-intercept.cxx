@@ -337,9 +337,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	*log << "Parsed options, opening listening socket on "
-	     << options.bind_addr_listen << "\n" << std::flush;
-
 	Socket s_listen;
 	{ // Open listening socket
 		std::string host, port;
