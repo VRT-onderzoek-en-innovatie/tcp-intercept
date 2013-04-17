@@ -122,7 +122,14 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 		ev_io_stop( EV_A_ e_rx_read );
 		if( buf.length() == 0 ) { // read EOF
 			*log << con->id << " " << dir << ": EOF\n" << std::flush;
+			rx.shutdown(SHUT_RD);
 			tx.shutdown(SHUT_WR);
+			con_open = false;
+			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
+				// Connection fully closed, clean up
+				*log << con->id << ": fully closed, cleaning up\n" << std::flush;
+				kill_connection(EV_A_ con);
+			}
 		} else { // read data
 			ev_io_start( EV_A_ e_tx_write );
 		}
@@ -225,6 +232,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->e_s_read.data =
 		new_con->e_s_write.data =
 			new_con.get();
+	new_con->con_open_c_to_s = new_con->con_open_s_to_c = true;
 
 	try {
 		new_con->s_server.connect( *server_addr );
