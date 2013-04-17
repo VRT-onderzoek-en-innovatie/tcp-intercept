@@ -66,11 +66,15 @@ std::string Socket::recv(size_t const max_length ) throw(Errno) {
 	return std::string(buf.get(), length); // TODO: avoid needless copy of data
 }
 
-void Socket::send(std::string const &data) throw(Errno,std::runtime_error) {
-	ssize_t rv = ::send(m_socket, data.data(), data.length(), 0);
+ssize_t Socket::send(char const *data, size_t len) throw(Errno) {
+	ssize_t rv = ::send(m_socket, data, len, 0);
 	if( rv == -1 ) {
 		throw Errno("Could not send()", errno);
 	}
+	return rv;
+}
+void Socket::send(std::string const &data) throw(Errno,std::runtime_error) {
+	ssize_t rv = this->send(data.data(), data.length());
 	if( rv != (signed)data.length() ) {
 		std::ostringstream e;
 		e << "Could not send(): Not enough bytes sent: " << rv << " < " << data.length();
