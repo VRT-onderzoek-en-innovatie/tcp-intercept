@@ -206,7 +206,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
-		*log << "Error: " << e.what() << std::flush;
+		*log << "Error: " << e.what() << "\n" << std::flush;
 		return;
 		// Sockets will go out of scope, and close() themselves
 	}
