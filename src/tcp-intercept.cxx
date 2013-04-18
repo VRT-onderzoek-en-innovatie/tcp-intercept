@@ -438,7 +438,12 @@ int main(int argc, char* argv[]) {
 		ev_io_start( EV_DEFAULT_ &e_listen );
 
 		*log << "Setup done, starting event loop\n" << std::flush;
-		ev_run(EV_DEFAULT_ 0);
+		try {
+			ev_run(EV_DEFAULT_ 0);
+		} catch( std::exception &e ) {
+			std::cerr << e.what() << "\n";
+			return EX_SOFTWARE;
+		}
 	}
 
 	*log << "Exiting...\n" << std::flush;
