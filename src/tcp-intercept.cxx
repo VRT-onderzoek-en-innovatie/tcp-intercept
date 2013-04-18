@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
 					"                                  connections.\n"
 					"                                  host and port resolving can be bypassed by\n"
 					"                                  placing [] around them\n"
-					"  --bind-outgoing -b host:port    Bind to the specified address for outgoing\n"
+					"  --bind-outgoing -B host:port    Bind to the specified address for outgoing\n"
 					"                                  connections.\n"
 					"                                  host and port resolving can be bypassed by\n"
 					"                                  placing [] around them\n"
