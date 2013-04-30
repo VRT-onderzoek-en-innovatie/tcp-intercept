@@ -24,7 +24,7 @@ iptables setup
 -------------
 ```
 ip rule add fwmark 1 table 5
-ip table add local 0.0.0.0/0 dev lo table 5
+ip route add local 0.0.0.0/0 dev lo table 5
 
 iptables -t mangle -N tproxy
 iptables -t mangle -A tproxy -p tcp -m socket -j MARK --set-mark 1/1
