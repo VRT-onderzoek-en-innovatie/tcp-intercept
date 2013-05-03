@@ -267,9 +267,6 @@ int main(int argc, char* argv[]) {
 		};
 	log.reset( new TimestampLog( std::cerr ) );
 
-	*log << PACKAGE_NAME << " version " << PACKAGE_VERSION
-	     << " (" << PACKAGE_GITREVISION << ") starting up\n" << std::flush;
-
 	{ // Parse options
 		char optstring[] = "hVfp:b:B:l:";
 		struct option longopts[] = {
@@ -336,6 +333,9 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
+
+	*log << PACKAGE_NAME << " version " << PACKAGE_VERSION
+	     << " (" << PACKAGE_GITREVISION << ") starting up\n" << std::flush;
 
 	Socket s_listen;
 	{ // Open listening socket
