@@ -97,6 +97,7 @@ AC_CHECK_FUNCS([bzero socket strerror gettimeofday])
 ########
 AC_CONFIG_FILES([
 	Makefile
+	contrib/Makefile
 	Socket/Makefile
 	Log/Makefile
 	src/Makefile

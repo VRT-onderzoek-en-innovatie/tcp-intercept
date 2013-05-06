@@ -1,2 +1,2 @@
 EXTRA_DIST = GITREVISION
-SUBDIRS = Socket Log src test
+SUBDIRS = contrib Socket Log src test
