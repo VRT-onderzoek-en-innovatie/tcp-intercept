@@ -40,6 +40,7 @@ AM_PROG_CC_C_O # per product options in Makefile.am
 # Checks for libraries.
 #######################
 AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
+AC_CHECK_LIB(log, LogAtLevel_nodebug, , [AC_MSG_ERROR([Couldn't find liblog])]) dnl '
 
 # Checks for header files.
 ##########################

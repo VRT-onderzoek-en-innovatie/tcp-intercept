@@ -10,13 +10,12 @@
 #include <boost/ptr_container/ptr_list.hpp>
 
 #include "../Socket/Socket.hxx"
-#include "../Log/TimestampLog.hxx"
-
-static const int MAX_CONN_BACKLOG = 32;
+#include <liblog.h>
 
 std::string logfilename;
-std::ofstream logfile;
-std::auto_ptr<std::ostream> log;
+FILE *logfile;
+
+static const int MAX_CONN_BACKLOG = 32;
 
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
 
@@ -37,19 +36,22 @@ boost::ptr_list< struct connection > connections;
 
 
 void received_sigint(EV_P_ ev_signal *w, int revents) throw() {
-	*log << "Received SIGINT, exiting\n" << std::flush;
+	LogInfo("Received SIGINT, exiting");
 	ev_break(EV_A_ EVUNLOOP_ALL);
 }
 void received_sigterm(EV_P_ ev_signal *w, int revents) throw() {
-	*log << "Received SIGTERM, exiting\n" << std::flush;
+	LogInfo("Received SIGTERM, exiting");
 	ev_break(EV_A_ EVUNLOOP_ALL);
 }
 
 void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
-	*log << "Received SIGHUP, closing this logfile\n" << std::flush;
-	logfile.close();
-	logfile.open(logfilename.c_str(), std::ios_base::app | std::ios_base::out );
-	*log << "Received SIGHUP, (re)opening this logfile\n" << std::flush;
+	LogInfo("Received SIGHUP, closing this logfile");
+	if( logfilename.size() > 0 ) {
+		fclose(logfile);
+		logfile = fopen(logfilename.c_str(), "a");
+		LogSetOutputFile(NULL, logfile);
+	} /* else we're still logging to stderr, which doesn't need reopening */
+	LogInfo("Received SIGHUP, (re)opening this logfile");
 }
 
 void kill_connection(EV_P_ struct connection *con) {
@@ -59,7 +61,7 @@ void kill_connection(EV_P_ struct connection *con) {
 	ev_io_stop(EV_A_ &con->e_s_read );
 	ev_io_stop(EV_A_ &con->e_s_write );
 
-	*log << con->id << ": closed\n" << std::flush;
+	LogInfo("%s: closed", con->id.c_str());
 
 	// Find and erase this connection in the list
 	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
@@ -77,13 +79,13 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 
 	Errno connect_error("connect()", con->s_server.getsockopt_so_error());
 	if( connect_error.error_number() != 0 ) {
-		*log << con->id << ": connect to server failed: "
-		     << connect_error.what() << "\n" << std::flush;
+		LogWarn("%s: connect to server failed: %s", con->id.c_str(),
+		     connect_error.what() );
 		kill_connection(EV_A_ con);
 		return;
 	}
 
-	*log << con->id << ": server accepted connection, splicing\n" << std::flush;
+	LogInfo("%s: server accepted connection, splicing", con->id.c_str());
 	ev_io_start(EV_A_ &con->e_c_write);
 	ev_io_start(EV_A_ &con->e_s_write);
 }
@@ -106,7 +108,7 @@ inline static void peer_ready_write(EV_P_ struct connection* con,
 		assert( rv > 0 );
 		buf = buf.substr( rv );
 	} catch( Errno &e ) {
-		*log << con->id << " " << dir << ": " << e.what() << "\n" << std::flush;
+		LogError("%s %s: %s", con->id.c_str(), dir.c_str(), e.what());
 		kill_connection(EV_A_ con);
 	}
 }
@@ -121,7 +123,7 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 		buf = rx.recv();
 		ev_io_stop( EV_A_ e_rx_read );
 		if( buf.length() == 0 ) { // read EOF
-			*log << con->id << " " << dir << ": EOF\n" << std::flush;
+			LogInfo("%s %s: EOF", con->id.c_str(), dir.c_str());
 			tx.shutdown(SHUT_WR);
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
@@ -132,7 +134,7 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 			ev_io_start( EV_A_ e_tx_write );
 		}
 	} catch( Errno &e ) {
-		*log << con->id << " " << dir << ": " << e.what() << "\n" << std::flush;
+		LogError("%s %s: %s", con->id.c_str(), dir.c_str(), e.what());
 		kill_connection(EV_A_ con);
 	}
 }
@@ -190,7 +192,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_client.non_blocking(true);
 
-		*log << new_con->id << ": Connection intercepted\n" << std::flush;
+		LogInfo("%s: Connection intercepted", new_con->id.c_str());
 
 		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
@@ -206,7 +208,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
-		*log << "Error: " << e.what() << "\n" << std::flush;
+		LogError("Error: %s", e.what());
 		return;
 		// Sockets will go out of scope, and close() themselves
 	}
@@ -236,7 +238,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			ev_io_start( EV_A_ &new_con->e_s_connect );
 
 		} else {
-			*log << "Error: " << e.what() << std::flush;
+			LogError("Error: %s", e.what());
 			return;
 			// Sockets will go out of scope, and close() themselves
 		}
@@ -244,9 +246,8 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	std::auto_ptr<SockAddr::SockAddr> my_addr;
 	my_addr = new_con->s_server.getsockname();
-	*log << new_con->id << ": Connecting "
-	     << my_addr->string() << "-->" << server_addr->string()
-	     << "\n" << std::flush;
+	LogInfo("%s: Connecting %s-->%s", new_con->id.c_str(),
+			my_addr->string().c_str(), server_addr->string().c_str());
 
 	connections.push_back( new_con.release() );
 }
@@ -265,7 +266,6 @@ int main(int argc, char* argv[]) {
 		/* bind_addr_listen = */ "[0.0.0.0]:[5000]",
 		/* bind_addr_outgoing = */ "[0.0.0.0]:[0]"
 		};
-	log.reset( new TimestampLog( std::cerr ) );
 
 	{ // Parse options
 		char optstring[] = "hVfp:b:B:l:";
@@ -327,15 +327,14 @@ int main(int argc, char* argv[]) {
 				break;
 			case 'l':
 				logfilename = optarg;
-				logfile.open(logfilename.c_str(), std::ios_base::app | std::ios_base::out );
-				log.reset( new TimestampLog( logfile ) );
+				logfile = fopen(logfilename.c_str(), "a");
+				LogSetOutputFile(NULL, logfile);
 				break;
 			}
 		}
 	}
 
-	*log << PACKAGE_NAME << " version " << PACKAGE_VERSION
-	     << " (" << PACKAGE_GITREVISION << ") starting up\n" << std::flush;
+	LogInfo(PACKAGE_NAME " version " PACKAGE_VERSION " (" PACKAGE_GITREVISION ") starting up");
 
 	Socket s_listen;
 	{ // Open listening socket
@@ -378,7 +377,7 @@ int main(int argc, char* argv[]) {
 		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
 
-		*log << "Listening on " << (*bind_sa)[0].string() << "\n" << std::flush;
+		LogInfo("Listening on %s", (*bind_sa)[0].string().c_str());
 	}
 
 	if( options.bind_addr_outgoing == "client" ) {
@@ -414,8 +413,7 @@ int main(int argc, char* argv[]) {
 		}
 		bind_addr_outgoing.reset( bind_sa->release(bind_sa->begin()).release() ); // Transfer ownership; TODO: this should be simpeler that double release()
 
-		*log << "Outgoing connections will connect from "
-		     << bind_addr_outgoing->string() << "\n" << std::flush;
+		LogInfo("Outgoing connections will connect from %s", bind_addr_outgoing->string().c_str());
 	}
 
 
@@ -437,7 +435,7 @@ int main(int argc, char* argv[]) {
 		ev_io_init( &e_listen, listening_socket_ready_for_read, s_listen, EV_READ );
 		ev_io_start( EV_DEFAULT_ &e_listen );
 
-		*log << "Setup done, starting event loop\n" << std::flush;
+		LogInfo("Setup done, starting event loop");
 		try {
 			ev_run(EV_DEFAULT_ 0);
 		} catch( std::exception &e ) {
@@ -446,6 +444,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	*log << "Exiting...\n" << std::flush;
+	LogInfo("Exiting...");
 	return 0;
 }
