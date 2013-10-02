@@ -4,7 +4,7 @@ AM_INIT_AUTOMAKE([dist-bzip2 -Wall])
 LT_INIT
 
 AC_MSG_CHECKING([whether this is a Git repository])
-PACKAGE_GITREVISION=`git describe --tags HEAD 2>/dev/null`
+PACKAGE_GITREVISION=`git describe --tags --always HEAD 2>/dev/null`
 which git > /dev/null; \
 if test $? -ne 0 || test "x$PACKAGE_GITREVISION" = "x"; then
 	PACKAGE_GITREVISION="`cat $srcdir/GITREVISION`-cached"
