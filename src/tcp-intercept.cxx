@@ -10,7 +10,7 @@
 #include <boost/ptr_container/ptr_list.hpp>
 
 #include "../Socket/Socket.hxx"
-#include <liblog.h>
+#include <libsimplelog.h>
 
 std::string logfilename;
 FILE *logfile;
