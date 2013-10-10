@@ -100,7 +100,6 @@ AC_CONFIG_FILES([
 	Makefile
 	contrib/Makefile
 	Socket/Makefile
-	Log/Makefile
 	src/Makefile
 	test/Makefile
 	])
