@@ -311,7 +311,18 @@ int main(int argc, char* argv[]) {
 				exit(EX_OK);
 			case 'V':
 				std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION
-				          << " (" << PACKAGE_GITREVISION << ")\n";
+				          << " (" << PACKAGE_GITREVISION << ")\n"
+				          << " configured with: " << CONFIGURE_ARGS << "\n"
+				          << " CFLAGS=\"" << CFLAGS << "\" CXXFLAGS=\"" << CXXFLAGS << "\""
+				          << " CPPFLAGS=\"" << CPPFLAGS << "\"\n"
+				          << " Options:\n"
+				          << "   IPv6: "
+#ifdef ENABLE_IPV6
+				                        << "yes\n"
+#else
+				                        << "no\n"
+#endif
+				          << "\n";
 				exit(EX_OK);
 			case 'f':
 				options.fork = false;

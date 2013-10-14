@@ -94,6 +94,12 @@ AC_CHECK_FUNCS([bzero socket strerror gettimeofday])
 # source: http://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Particular-Functions.html#AC_FUNC_STRFTIME
 
 
+# Add some info to config.h
+AC_DEFINE_UNQUOTED([CONFIGURE_ARGS],["$ac_configure_args"],[Configure flags])
+AC_DEFINE_UNQUOTED([CFLAGS],["$CFLAGS"],[Used C flags])
+AC_DEFINE_UNQUOTED([CXXFLAGS],["$CXXFLAGS"],[Used C++ flags])
+AC_DEFINE_UNQUOTED([CPPFLAGS],["$CPPFLAGS"],[Used C-preprocessor flags])
+
 # Output
 ########
 AC_CONFIG_FILES([
