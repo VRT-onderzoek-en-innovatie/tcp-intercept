@@ -393,6 +393,7 @@ int main(int argc, char* argv[]) {
 
 	if( options.bind_addr_outgoing == "client" ) {
 		bind_addr_outgoing.reset(NULL);
+		LogInfo("Outgoing connections will connect from original source address");
 	} else { // Resolve client address
 		std::string host, port;
 
