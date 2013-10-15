@@ -46,7 +46,7 @@ AC_CHECK_LIB(simplelog, LogAtLevel_nodebug, , [AC_MSG_ERROR([Couldn't find libsi
 ##########################
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h string.h strings.h sys/socket.h unistd.h fcntl.h sys/time.h])
-AC_CHECK_HEADER([boost/ptr_container/ptr_vector.hpp], [], [AC_MSG_ERROR([Couldn't find boost library])], []) dnl '
+AC_CHECK_HEADER([boost/ptr_container/ptr_list.hpp], [], [AC_MSG_ERROR([Couldn't find boost library])], []) dnl '
 AC_HEADER_TIME
 
 
