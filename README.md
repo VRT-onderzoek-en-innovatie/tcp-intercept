@@ -22,6 +22,17 @@ In order to change the congestion control however, intermediate buffers are
 needed.
 
 
+Compiling and installing
+------------------------
+
+```
+autoreconf -i
+./configure
+make
+sudo make install
+```
+
+
 iptables setup
 -------------
 ```
