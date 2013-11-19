@@ -25,6 +25,13 @@ needed.
 Compiling and installing
 ------------------------
 
+Dependencies:
+
+* libev (`libev-dev` on debian-based systems)
+* libsimplelog (https://github.com/VRT-onderzoek-en-innovatie/libsimplelog)
+
+Instructions:
+
 ```
 autoreconf -i
 ./configure
