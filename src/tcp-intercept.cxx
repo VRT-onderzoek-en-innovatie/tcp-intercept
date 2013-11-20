@@ -64,6 +64,7 @@ void kill_connection(EV_P_ struct connection *con) {
 	LogInfo("%s: closed", con->id.c_str());
 
 	// Find and erase this connection in the list
+	// TODO scaling issue: this is O(n) with the number of connections.
 	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
 		if( &(*i) == con ) {
 			connections.erase(i);
@@ -118,19 +119,20 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
                                    Socket &rx, ev_io *e_rx_read,
                                    std::string &buf,
                                    Socket &tx, ev_io *e_tx_write ) {
+	// TODO allow read when we still have data in the buffer to streamline things
 	assert( buf.length() == 0 );
 	try {
 		buf = rx.recv();
 		ev_io_stop( EV_A_ e_rx_read );
-		if( buf.length() == 0 ) { // read EOF
+		if( buf.length() == 0 ) { // EOF has been read
 			LogInfo("%s %s: EOF", con->id.c_str(), dir.c_str());
-			tx.shutdown(SHUT_WR);
+			tx.shutdown(SHUT_WR); // shutdown() does not block
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
 				// Connection fully closed, clean up
 				kill_connection(EV_A_ con);
 			}
-		} else { // read data
+		} else { // data has been read
 			ev_io_start( EV_A_ e_tx_write );
 		}
 	} catch( Errno &e ) {
@@ -195,6 +197,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		LogInfo("%s: Connection intercepted", new_con->id.c_str());
 
+		// TODO: make IPv6 ready
 		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 		if( bind_addr_outgoing.get() != NULL ) {
@@ -432,6 +435,7 @@ int main(int argc, char* argv[]) {
 		ev_signal ev_sigint_watcher;
 		ev_signal_init( &ev_sigint_watcher, received_sigint, SIGINT);
 		ev_signal_start( EV_DEFAULT_ &ev_sigint_watcher);
+
 		ev_signal ev_sigterm_watcher;
 		ev_signal_init( &ev_sigterm_watcher, received_sigterm, SIGTERM);
 		ev_signal_start( EV_DEFAULT_ &ev_sigterm_watcher);
