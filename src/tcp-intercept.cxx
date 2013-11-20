@@ -283,12 +283,12 @@ int main(int argc, char* argv[]) {
 		int opt;
 		while( (opt = getopt_long(argc, argv, optstring, longopts, &longindex)) != -1 ) {
 			switch(opt) {
-			case '?':
 			case 'h':
+			case '?':
 				std::cerr <<
 				//  >---------------------- Standard terminal width ---------------------------------<
 					"Options:\n"
-					"  -h -? --help                    Displays this help message and exits\n"
+					"  -h --help                       Displays this help message and exits\n"
 					"  -V --version                    Displays the version and exits\n"
 					"  --foreground -f                 Don't fork into the background after init\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
