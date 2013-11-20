@@ -181,6 +181,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
+	SockAddr::SockAddr *server_bind_addr;
 	try {
 		new_con->s_client = s_listen->accept(&client_addr);
 
@@ -197,14 +198,15 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 		if( bind_addr_outgoing.get() != NULL ) {
-			new_con->s_server.bind( *bind_addr_outgoing );
+			server_bind_addr = bind_addr_outgoing;
 		} else {
 #if HAVE_DECL_IP_TRANSPARENT
 			int value = 1;
 			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
-			new_con->s_server.bind( *client_addr );
+			server_bind_addr = client_addr;
 		}
+		new_con->s_server.bind( *server_bind_addr );
 
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
@@ -226,6 +228,9 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			new_con.get();
 	new_con->con_open_c_to_s = new_con->con_open_s_to_c = true;
 
+	LogInfo("%s: Connecting %s-->%s", new_con->id.c_str(),
+			server_bind_addr->string().c_str(), server_addr->string().c_str());
+
 	try {
 		new_con->s_server.connect( *server_addr );
 		// Connection succeeded right away, flag the callback right away
@@ -243,11 +248,6 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			// Sockets will go out of scope, and close() themselves
 		}
 	}
-
-	std::auto_ptr<SockAddr::SockAddr> my_addr;
-	my_addr = new_con->s_server.getsockname();
-	LogInfo("%s: Connecting %s-->%s", new_con->id.c_str(),
-			my_addr->string().c_str(), server_addr->string().c_str());
 
 	connections.push_back( new_con.release() );
 }
