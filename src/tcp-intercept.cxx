@@ -54,6 +54,11 @@ void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
 	LogInfo("Received SIGHUP, (re)opening this logfile");
 }
 
+void received_sigpipe(EV_P_ ev_signal *w, int revents) throw() {
+	LogDebug("Received SIGPIPE, ignoring");
+}
+
+
 void kill_connection(EV_P_ struct connection *con) {
 	// Remove from event loops
 	ev_io_stop(EV_A_ &con->e_c_read );
@@ -64,6 +69,7 @@ void kill_connection(EV_P_ struct connection *con) {
 	LogInfo("%s: closed", con->id.c_str());
 
 	// Find and erase this connection in the list
+	// TODO scaling issue: this is O(n) with the number of connections.
 	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
 		if( &(*i) == con ) {
 			connections.erase(i);
@@ -118,19 +124,20 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
                                    Socket &rx, ev_io *e_rx_read,
                                    std::string &buf,
                                    Socket &tx, ev_io *e_tx_write ) {
+	// TODO allow read when we still have data in the buffer to streamline things
 	assert( buf.length() == 0 );
 	try {
 		buf = rx.recv();
 		ev_io_stop( EV_A_ e_rx_read );
-		if( buf.length() == 0 ) { // read EOF
+		if( buf.length() == 0 ) { // EOF has been read
 			LogInfo("%s %s: EOF", con->id.c_str(), dir.c_str());
-			tx.shutdown(SHUT_WR);
+			tx.shutdown(SHUT_WR); // shutdown() does not block
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
 				// Connection fully closed, clean up
 				kill_connection(EV_A_ con);
 			}
-		} else { // read data
+		} else { // data has been read
 			ev_io_start( EV_A_ e_tx_write );
 		}
 	} catch( Errno &e ) {
@@ -181,6 +188,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	std::auto_ptr<SockAddr::SockAddr> client_addr;
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
+	SockAddr::SockAddr *server_bind_addr;
 	try {
 		new_con->s_client = s_listen->accept(&client_addr);
 
@@ -194,17 +202,19 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		LogInfo("%s: Connection intercepted", new_con->id.c_str());
 
+		// TODO: make IPv6 ready
 		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
 
 		if( bind_addr_outgoing.get() != NULL ) {
-			new_con->s_server.bind( *bind_addr_outgoing );
+			server_bind_addr = bind_addr_outgoing;
 		} else {
 #if HAVE_DECL_IP_TRANSPARENT
 			int value = 1;
 			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
-			new_con->s_server.bind( *client_addr );
+			server_bind_addr = client_addr;
 		}
+		new_con->s_server.bind( *server_bind_addr );
 
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
@@ -226,6 +236,9 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			new_con.get();
 	new_con->con_open_c_to_s = new_con->con_open_s_to_c = true;
 
+	LogInfo("%s: Connecting %s-->%s", new_con->id.c_str(),
+			server_bind_addr->string().c_str(), server_addr->string().c_str());
+
 	try {
 		new_con->s_server.connect( *server_addr );
 		// Connection succeeded right away, flag the callback right away
@@ -243,11 +256,6 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			// Sockets will go out of scope, and close() themselves
 		}
 	}
-
-	std::auto_ptr<SockAddr::SockAddr> my_addr;
-	my_addr = new_con->s_server.getsockname();
-	LogInfo("%s: Connecting %s-->%s", new_con->id.c_str(),
-			my_addr->string().c_str(), server_addr->string().c_str());
 
 	connections.push_back( new_con.release() );
 }
@@ -283,12 +291,12 @@ int main(int argc, char* argv[]) {
 		int opt;
 		while( (opt = getopt_long(argc, argv, optstring, longopts, &longindex)) != -1 ) {
 			switch(opt) {
-			case '?':
 			case 'h':
+			case '?':
 				std::cerr <<
 				//  >---------------------- Standard terminal width ---------------------------------<
 					"Options:\n"
-					"  -h -? --help                    Displays this help message and exits\n"
+					"  -h --help                       Displays this help message and exits\n"
 					"  -V --version                    Displays the version and exits\n"
 					"  --foreground -f                 Don't fork into the background after init\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
@@ -433,6 +441,7 @@ int main(int argc, char* argv[]) {
 		ev_signal ev_sigint_watcher;
 		ev_signal_init( &ev_sigint_watcher, received_sigint, SIGINT);
 		ev_signal_start( EV_DEFAULT_ &ev_sigint_watcher);
+
 		ev_signal ev_sigterm_watcher;
 		ev_signal_init( &ev_sigterm_watcher, received_sigterm, SIGTERM);
 		ev_signal_start( EV_DEFAULT_ &ev_sigterm_watcher);
@@ -440,6 +449,10 @@ int main(int argc, char* argv[]) {
 		ev_signal ev_sighup_watcher;
 		ev_signal_init( &ev_sighup_watcher, received_sighup, SIGHUP);
 		ev_signal_start( EV_DEFAULT_ &ev_sighup_watcher);
+
+		ev_signal ev_sigpipe_watcher;
+		ev_signal_init( &ev_sigpipe_watcher, received_sigpipe, SIGPIPE);
+		ev_signal_start( EV_DEFAULT_ &ev_sigpipe_watcher);
 
 
 		ev_io e_listen;

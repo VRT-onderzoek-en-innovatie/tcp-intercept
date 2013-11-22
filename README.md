@@ -15,9 +15,29 @@ can consist of using MultiPath-TCP, using another congestion control algorithm,
 or both.
 
 Other projects exist to simply add MPTCP-support to existing connections on the
-netfilter-layer. This is more performant, since it doesn't maintain any buffers.
+netfilter-layer (e.g.
+http://www.ietf.org/mail-archive/web/multipathtcp/current/msg01934.html). This
+is more performant, since it doesn't maintain any buffers.
 In order to change the congestion control however, intermediate buffers are
 needed.
+
+
+Compiling and installing
+------------------------
+
+Dependencies:
+
+* libev (`libev-dev` on debian-based systems)
+* libsimplelog (https://github.com/VRT-onderzoek-en-innovatie/libsimplelog)
+
+Instructions:
+
+```
+autoreconf -i
+./configure
+make
+sudo make install
+```
 
 
 iptables setup
