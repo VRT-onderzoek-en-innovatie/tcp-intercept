@@ -54,6 +54,11 @@ void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
 	LogInfo("Received SIGHUP, (re)opening this logfile");
 }
 
+void received_sigpipe(EV_P_ ev_signal *w, int revents) throw() {
+	LogDebug("Received SIGPIPE, ignoring");
+}
+
+
 void kill_connection(EV_P_ struct connection *con) {
 	// Remove from event loops
 	ev_io_stop(EV_A_ &con->e_c_read );
@@ -443,6 +448,10 @@ int main(int argc, char* argv[]) {
 		ev_signal ev_sighup_watcher;
 		ev_signal_init( &ev_sighup_watcher, received_sighup, SIGHUP);
 		ev_signal_start( EV_DEFAULT_ &ev_sighup_watcher);
+
+		ev_signal ev_sigpipe_watcher;
+		ev_signal_init( &ev_sigpipe_watcher, received_sigpipe, SIGPIPE);
+		ev_signal_start( EV_DEFAULT_ &ev_sigpipe_watcher);
 
 
 		ev_io e_listen;
