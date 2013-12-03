@@ -264,12 +264,10 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 int main(int argc, char* argv[]) {
 	// Default options
 	struct {
-		bool fork;
 		std::string pid_file;
 		std::string bind_addr_listen;
 		std::string bind_addr_outgoing;
 	} options = {
-		/* fork = */ true,
 		/* pid_file = */ "",
 		/* bind_addr_listen = */ "[0.0.0.0]:[5000]",
 		/* bind_addr_outgoing = */ "[0.0.0.0]:[0]"
@@ -280,7 +278,6 @@ int main(int argc, char* argv[]) {
 		struct option longopts[] = {
 			{"help",			no_argument, NULL, 'h'},
 			{"version",			no_argument, NULL, 'V'},
-			{"forgeground",		no_argument, NULL, 'f'},
 			{"pid-file",		required_argument, NULL, 'p'},
 			{"bind-listen",		required_argument, NULL, 'b'},
 			{"bind-outgoing",	required_argument, NULL, 'B'},
@@ -298,7 +295,6 @@ int main(int argc, char* argv[]) {
 					"Options:\n"
 					"  -h --help                       Displays this help message and exits\n"
 					"  -V --version                    Displays the version and exits\n"
-					"  --foreground -f                 Don't fork into the background after init\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
 					"                                  usefull when running as a daemon\n"
 					"  --bind-listen -b host:port      Bind to the specified address for incomming\n"
@@ -332,9 +328,6 @@ int main(int argc, char* argv[]) {
 #endif
 				          << "\n";
 				exit(EX_OK);
-			case 'f':
-				options.fork = false;
-				break;
 			case 'p':
 				options.pid_file = optarg;
 				break;
