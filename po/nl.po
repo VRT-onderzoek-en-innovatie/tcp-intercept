@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tcp-intercept 0.0.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-28 10:40+0100\n"
+"POT-Creation-Date: 2014-02-28 12:06+0100\n"
 "PO-Revision-Date: 2014-02-28 10:41+0100\n"
 "Last-Translator: Niels Laukens <niels.laukens@vrt.be>\n"
 "Language-Team: Dutch\n"
@@ -17,7 +17,181 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: src/tcp-intercept.cxx:43
+msgid "Received SIGINT, exiting"
+msgstr ""
+
+#: src/tcp-intercept.cxx:47
+msgid "Received SIGTERM, exiting"
+msgstr ""
+
+#: src/tcp-intercept.cxx:52
+msgid "Received SIGHUP, closing this logfile"
+msgstr ""
+
+#: src/tcp-intercept.cxx:58
+msgid "Received SIGHUP, (re)opening this logfile"
+msgstr ""
+
+#: src/tcp-intercept.cxx:62
+msgid "Received SIGPIPE, ignoring"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID that was just closed
+#: src/tcp-intercept.cxx:74
+#, c-format
+msgid "%1$s: closed"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID,
+#. %2$s the error message
+#: src/tcp-intercept.cxx:95
+#, c-format
+msgid "%1$s: connect to server failed: %2$s"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID
+#: src/tcp-intercept.cxx:103
+#, c-format
+msgid "%1$s: server accepted connection, splicing"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID,
+#. %2$s contains the direction (separately translated),
+#. %3$s contains the error
+#.
+#: src/tcp-intercept.cxx:130 src/tcp-intercept.cxx:164
+#, c-format
+msgid "%1$s %2$s: Error: %3$s)"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID,
+#. %2$s contains the direction (separately translated)
+#.
+#: src/tcp-intercept.cxx:149
+#, c-format
+msgid "%1$s %2$s: EOF"
+msgstr ""
+
+#: src/tcp-intercept.cxx:172 src/tcp-intercept.cxx:197
+msgid "S>C"
+msgstr ""
+
+#: src/tcp-intercept.cxx:180 src/tcp-intercept.cxx:189
+msgid "C>S"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID
+#.
+#: src/tcp-intercept.cxx:224
+#, c-format
+msgid "%1$s: Connection intercepted"
+msgstr ""
+
+#: src/tcp-intercept.cxx:241 src/tcp-intercept.cxx:271
+#, c-format
+msgid "Error: %s"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the connection ID,
+#. %2$s the source address of the new connection,
+#. %3$s the destination address of the new connection
+#.
+#: src/tcp-intercept.cxx:283
+#, c-format
+msgid "%1$s: Connecting %2$s-->%3$s"
+msgstr ""
+
+#: src/tcp-intercept.cxx:325
+msgid ""
+"Options:\n"
+"  -h --help                       Displays this help message and exits\n"
+"  -V --version                    Displays the version and exits\n"
+"  --pid-file -p file              The file to write the PID to, especially\n"
+"                                  usefull when running as a daemon\n"
+"  --bind-listen -b host:port      Bind to the specified address for "
+"incomming\n"
+"                                  connections.\n"
+"                                  host and port resolving can be bypassed "
+"by\n"
+"                                  placing [] around them\n"
+"  --bind-outgoing -B host:port    Bind to the specified address for "
+"outgoing\n"
+"                                  connections.\n"
+"                                  host and port resolving can be bypassed "
+"by\n"
+"                                  placing [] around them\n"
+"                                  the special string \"client\" can be used "
+"to\n"
+"                                  reuse the client's source address. Note "
+"that\n"
+"                                  you should take care that the return "
+"packets\n"
+"                                  pass through this process again!\n"
+"  --log -l file                   Log to file\n"
+msgstr ""
+
+#: src/tcp-intercept.cxx:347
+#, c-format
+msgid ""
+"%1$s version %2$s\n"
+" configured with: %3$s\n"
+" CFLAGS=\"%4$s\" CXXFLAGS=\"%5$s\" CPPFLAGS=\"%6$s\"\n"
+" Options:\n"
+"   IPv6: %7$s\n"
+"\n"
+msgstr ""
+
 #: src/tcp-intercept.cxx:357
+msgid "yes"
+msgstr ""
+
+#: src/tcp-intercept.cxx:359
+msgid "no"
+msgstr ""
+
+#: src/tcp-intercept.cxx:381
 #, c-format
 msgid "%1$s version %2$s starting up"
 msgstr "%1$s versie %2$s start op"
+
+#. TRANSLATORS: %1$s contains the string passed as option
+#.
+#: src/tcp-intercept.cxx:397 src/tcp-intercept.cxx:447
+#, c-format
+msgid "Invalid bind string \"%1$s\": could not find ':'\n"
+msgstr ""
+
+#: src/tcp-intercept.cxx:406 src/tcp-intercept.cxx:456
+#, c-format
+msgid "Can not bind to \"%1$s\": Could not resolve\n"
+msgstr ""
+
+#: src/tcp-intercept.cxx:410 src/tcp-intercept.cxx:459
+#, c-format
+msgid "Can not bind to \"%1$s\": Resolves to multiple entries:\n"
+msgstr ""
+
+#. TRANSLATORS: %1$s contains the listening address
+#.
+#: src/tcp-intercept.cxx:428
+#, c-format
+msgid "Listening on %s"
+msgstr ""
+
+#: src/tcp-intercept.cxx:433
+msgid "Outgoing connections will connect from original source address"
+msgstr ""
+
+#: src/tcp-intercept.cxx:467
+#, c-format
+msgid "Outgoing connections will connect from %1$s"
+msgstr ""
+
+#: src/tcp-intercept.cxx:494
+msgid "Setup done, starting event loop"
+msgstr ""
+
+#: src/tcp-intercept.cxx:503
+msgid "Exiting cleanly..."
+msgstr ""

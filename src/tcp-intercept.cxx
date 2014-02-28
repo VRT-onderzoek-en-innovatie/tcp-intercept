@@ -40,26 +40,26 @@ boost::ptr_list< struct connection > connections;
 
 
 void received_sigint(EV_P_ ev_signal *w, int revents) throw() {
-	LogInfo("Received SIGINT, exiting");
+	LogInfo(_("Received SIGINT, exiting"));
 	ev_break(EV_A_ EVUNLOOP_ALL);
 }
 void received_sigterm(EV_P_ ev_signal *w, int revents) throw() {
-	LogInfo("Received SIGTERM, exiting");
+	LogInfo(_("Received SIGTERM, exiting"));
 	ev_break(EV_A_ EVUNLOOP_ALL);
 }
 
 void received_sighup(EV_P_ ev_signal *w, int revents) throw() {
-	LogInfo("Received SIGHUP, closing this logfile");
+	LogInfo(_("Received SIGHUP, closing this logfile"));
 	if( logfilename.size() > 0 ) {
 		fclose(logfile);
 		logfile = fopen(logfilename.c_str(), "a");
 		LogSetOutputFile(NULL, logfile);
 	} /* else we're still logging to stderr, which doesn't need reopening */
-	LogInfo("Received SIGHUP, (re)opening this logfile");
+	LogInfo(_("Received SIGHUP, (re)opening this logfile"));
 }
 
 void received_sigpipe(EV_P_ ev_signal *w, int revents) throw() {
-	LogDebug("Received SIGPIPE, ignoring");
+	LogDebug(_("Received SIGPIPE, ignoring"));
 }
 
 
@@ -70,7 +70,8 @@ void kill_connection(EV_P_ struct connection *con) {
 	ev_io_stop(EV_A_ &con->e_s_read );
 	ev_io_stop(EV_A_ &con->e_s_write );
 
-	LogInfo("%s: closed", con->id.c_str());
+	/* TRANSLATORS: %1$s contains the connection ID that was just closed */
+	LogInfo(_("%1$s: closed"), con->id.c_str());
 
 	// Find and erase this connection in the list
 	// TODO scaling issue: this is O(n) with the number of connections.
@@ -89,13 +90,17 @@ static void server_socket_connect_done(EV_P_ ev_io *w, int revents) {
 
 	Errno connect_error("connect()", con->s_server.getsockopt_so_error());
 	if( connect_error.error_number() != 0 ) {
-		LogWarn("%s: connect to server failed: %s", con->id.c_str(),
-		     connect_error.what() );
+		/* TRANSLATORS: %1$s contains the connection ID,
+		   %2$s the error message */
+		LogWarn(_("%1$s: connect to server failed: %2$s"),
+			con->id.c_str(),
+			connect_error.what() );
 		kill_connection(EV_A_ con);
 		return;
 	}
 
-	LogInfo("%s: server accepted connection, splicing", con->id.c_str());
+	/* TRANSLATORS: %1$s contains the connection ID */
+	LogInfo(_("%1$s: server accepted connection, splicing"), con->id.c_str());
 	ev_io_start(EV_A_ &con->e_c_write);
 	ev_io_start(EV_A_ &con->e_s_write);
 }
@@ -118,7 +123,11 @@ inline static void peer_ready_write(EV_P_ struct connection* con,
 		assert( rv > 0 );
 		buf = buf.substr( rv );
 	} catch( Errno &e ) {
-		LogError("%s %s: %s", con->id.c_str(), dir.c_str(), e.what());
+		/* TRANSLATORS: %1$s contains the connection ID,
+		   %2$s contains the direction (separately translated),
+		   %3$s contains the error
+		 */
+		LogError(_("%1$s %2$s: Error: %3$s)"), con->id.c_str(), dir.c_str(), e.what());
 		kill_connection(EV_A_ con);
 	}
 }
@@ -134,7 +143,10 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 		buf = rx.recv();
 		ev_io_stop( EV_A_ e_rx_read );
 		if( buf.length() == 0 ) { // EOF has been read
-			LogInfo("%s %s: EOF", con->id.c_str(), dir.c_str());
+			/* TRANSLATORS: %1$s contains the connection ID,
+			   %2$s contains the direction (separately translated)
+			 */
+			LogInfo(_("%1$s %2$s: EOF"), con->id.c_str(), dir.c_str());
 			tx.shutdown(SHUT_WR); // shutdown() does not block
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
@@ -145,7 +157,11 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 			ev_io_start( EV_A_ e_tx_write );
 		}
 	} catch( Errno &e ) {
-		LogError("%s %s: %s", con->id.c_str(), dir.c_str(), e.what());
+		/* TRANSLATORS: %1$s contains the connection ID,
+		   %2$s contains the direction (separately translated),
+		   %3$s contains the error
+		 */
+		LogError(_("%1$s %2$s: Error: %3$s)"), con->id.c_str(), dir.c_str(), e.what());
 		kill_connection(EV_A_ con);
 	}
 }
@@ -153,7 +169,7 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 static void client_ready_write(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 	assert( w == &con->e_c_write );
-	return peer_ready_write(EV_A_ con, "S>C", con->con_open_s_to_c,
+	return peer_ready_write(EV_A_ con, _("S>C"), con->con_open_s_to_c,
 	                        con->s_server, &con->e_s_read,
 	                        con->buf_s_to_c,
 	                        con->s_client, &con->e_c_write);
@@ -161,7 +177,7 @@ static void client_ready_write(EV_P_ ev_io *w, int revents) {
 static void server_ready_write(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 	assert( w == &con->e_s_write );
-	return peer_ready_write(EV_A_ con, "C>S", con->con_open_c_to_s,
+	return peer_ready_write(EV_A_ con, _("C>S"), con->con_open_c_to_s,
 	                        con->s_client, &con->e_c_read,
 	                        con->buf_c_to_s,
 	                        con->s_server, &con->e_s_write);
@@ -170,7 +186,7 @@ static void server_ready_write(EV_P_ ev_io *w, int revents) {
 static void client_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 	assert( w == &con->e_c_read );
-	return peer_ready_read(EV_A_ con, "C>S", con->con_open_c_to_s,
+	return peer_ready_read(EV_A_ con, _("C>S"), con->con_open_c_to_s,
 	                       con->s_client, &con->e_c_read,
 	                       con->buf_c_to_s,
 	                       con->s_server, &con->e_s_write);
@@ -178,7 +194,7 @@ static void client_ready_read(EV_P_ ev_io *w, int revents) {
 static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
 	assert( w == &con->e_s_read );
-	return peer_ready_read(EV_A_ con, "S>C", con->con_open_s_to_c,
+	return peer_ready_read(EV_A_ con, _("S>C"), con->con_open_s_to_c,
 	                       con->s_server, &con->e_s_read,
 	                       con->buf_s_to_c,
 	                       con->s_client, &con->e_c_write);
@@ -203,7 +219,9 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_client.non_blocking(true);
 
-		LogInfo("%s: Connection intercepted", new_con->id.c_str());
+		/* TRANSLATORS: %1$s contains the connection ID
+		 */
+		LogInfo(_("%1$s: Connection intercepted"), new_con->id.c_str());
 
 		// TODO: make IPv6 ready
 		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
@@ -220,7 +238,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
-		LogError("Error: %s", e.what());
+		LogError(_("Error: %s"), e.what());
 		return;
 		// Sockets will go out of scope, and close() themselves
 	}
@@ -250,7 +268,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 			ev_io_start( EV_A_ &new_con->e_s_connect );
 
 		} else {
-			LogError("Error: %s", e.what());
+			LogError(_("Error: %s"), e.what());
 			return;
 			// Sockets will go out of scope, and close() themselves
 		}
@@ -258,7 +276,11 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 	std::auto_ptr<SockAddr::SockAddr> my_addr;
 	my_addr = new_con->s_server.getsockname();
-	LogInfo("%s: Connecting %s-->%s", new_con->id.c_str(),
+	/* TRANSLATORS: %1$s contains the connection ID,
+	   %2$s the source address of the new connection,
+	   %3$s the destination address of the new connection
+	 */
+	LogInfo(_("%1$s: Connecting %2$s-->%3$s"), new_con->id.c_str(),
 			my_addr->string().c_str(), server_addr->string().c_str());
 
 	connections.push_back( new_con.release() );
@@ -298,7 +320,7 @@ int main(int argc, char* argv[]) {
 			switch(opt) {
 			case 'h':
 			case '?':
-				std::cerr <<
+				std::cerr << _(
 				//  >---------------------- Standard terminal width ---------------------------------<
 					"Options:\n"
 					"  -h --help                       Displays this help message and exits\n"
@@ -318,23 +340,25 @@ int main(int argc, char* argv[]) {
 					"                                  you should take care that the return packets\n"
 					"                                  pass through this process again!\n"
 					"  --log -l file                   Log to file\n"
-					;
+					);
 				if( opt == '?' ) exit(EX_USAGE);
 				exit(EX_OK);
 			case 'V':
-				std::cout << PACKAGE_NAME << " version " << PACKAGE_VERSION
-				          << " (" << PACKAGE_GITREVISION << ")\n"
-				          << " configured with: " << CONFIGURE_ARGS << "\n"
-				          << " CFLAGS=\"" << CFLAGS << "\" CXXFLAGS=\"" << CXXFLAGS << "\""
-				          << " CPPFLAGS=\"" << CPPFLAGS << "\"\n"
-				          << " Options:\n"
-				          << "   IPv6: "
+				printf(_("%1$s version %2$s\n"
+				         " configured with: %3$s\n"
+				         " CFLAGS=\"%4$s\" CXXFLAGS=\"%5$s\" CPPFLAGS=\"%6$s\"\n"
+				         " Options:\n"
+				         "   IPv6: %7$s\n"
+				         "\n"),
+					 PACKAGE_NAME, PACKAGE_VERSION " (" PACKAGE_GITREVISION ")",
+				         CONFIGURE_ARGS,
+				         CFLAGS, CXXFLAGS, CPPFLAGS,
 #ifdef ENABLE_IPV6
-				                        << "yes\n"
+				         _("yes")
 #else
-				                        << "no\n"
+				         _("no")
 #endif
-				          << "\n";
+				         );
 				exit(EX_OK);
 			case 'p':
 				options.pid_file = optarg;
@@ -368,7 +392,9 @@ int main(int argc, char* argv[]) {
 		 */
 		size_t c = options.bind_addr_listen.rfind(":");
 		if( c == std::string::npos ) {
-			std::cerr << "Invalid bind string \"" << options.bind_addr_listen << "\": could not find ':'\n";
+			/* TRANSLATORS: %1$s contains the string passed as option
+			 */
+			fprintf(stderr, _("Invalid bind string \"%1$s\": could not find ':'\n"), options.bind_addr_listen.c_str());
 			exit(EX_DATAERR);
 		}
 		host = options.bind_addr_listen.substr(0, c);
@@ -377,11 +403,11 @@ int main(int argc, char* argv[]) {
 		std::auto_ptr< boost::ptr_vector< SockAddr::SockAddr> > bind_sa
 			= SockAddr::resolve( host, port, 0, SOCK_STREAM, 0);
 		if( bind_sa->size() == 0 ) {
-			std::cerr << "Can not bind to \"" << options.bind_addr_listen << "\": Could not resolve\n";
+			fprintf(stderr, _("Can not bind to \"%1$s\": Could not resolve\n"), options.bind_addr_listen.c_str());
 			exit(EX_DATAERR);
 		} else if( bind_sa->size() > 1 ) {
 			// TODO: allow this
-			std::cerr << "Can not bind to \"" << options.bind_addr_listen << "\": Resolves to multiple entries:\n";
+			fprintf(stderr, _("Can not bind to \"%1$s\": Resolves to multiple entries:\n"), options.bind_addr_listen.c_str());
 			for( typeof(bind_sa->begin()) i = bind_sa->begin(); i != bind_sa->end(); i++ ) {
 				std::cerr << "  " << i->string() << "\n";
 			}
@@ -397,12 +423,14 @@ int main(int argc, char* argv[]) {
 		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
 #endif
 
-		LogInfo("Listening on %s", (*bind_sa)[0].string().c_str());
+		/* TRANSLATORS: %1$s contains the listening address
+		 */
+		LogInfo(_("Listening on %s"), (*bind_sa)[0].string().c_str());
 	}
 
 	if( options.bind_addr_outgoing == "client" ) {
 		bind_addr_outgoing.reset(NULL);
-		LogInfo("Outgoing connections will connect from original source address");
+		LogInfo(_("Outgoing connections will connect from original source address"));
 	} else { // Resolve client address
 		std::string host, port;
 
@@ -414,7 +442,9 @@ int main(int argc, char* argv[]) {
 		 */
 		size_t c = options.bind_addr_outgoing.rfind(":");
 		if( c == std::string::npos ) {
-			std::cerr << "Invalid bind string \"" << options.bind_addr_outgoing << "\": could not find ':'\n";
+			/* TRANSLATORS: %1$s contains the string passed as option
+			 */
+			fprintf(stderr, _("Invalid bind string \"%1$s\": could not find ':'\n"), options.bind_addr_outgoing.c_str());
 			exit(EX_DATAERR);
 		}
 		host = options.bind_addr_outgoing.substr(0, c);
@@ -423,10 +453,10 @@ int main(int argc, char* argv[]) {
 		std::auto_ptr< boost::ptr_vector< SockAddr::SockAddr> > bind_sa
 			= SockAddr::resolve( host, port, 0, SOCK_STREAM, 0);
 		if( bind_sa->size() == 0 ) {
-			std::cerr << "Can not bind to \"" << options.bind_addr_outgoing << "\": Could not resolve\n";
+			fprintf(stderr, _("Can not bind to \"%1$s\": Could not resolve\n"), options.bind_addr_outgoing.c_str());
 			exit(EX_DATAERR);
 		} else if( bind_sa->size() > 1 ) {
-			std::cerr << "Can not bind to \"" << options.bind_addr_outgoing << "\": Resolves to multiple entries:\n";
+			fprintf(stderr, _("Can not bind to \"%1$s\": Resolves to multiple entries:\n"), options.bind_addr_outgoing.c_str());
 			for( typeof(bind_sa->begin()) i = bind_sa->begin(); i != bind_sa->end(); i++ ) {
 				std::cerr << "  " << i->string() << "\n";
 			}
@@ -434,7 +464,7 @@ int main(int argc, char* argv[]) {
 		}
 		bind_addr_outgoing.reset( bind_sa->release(bind_sa->begin()).release() ); // Transfer ownership; TODO: this should be simpeler that double release()
 
-		LogInfo("Outgoing connections will connect from %s", bind_addr_outgoing->string().c_str());
+		LogInfo(_("Outgoing connections will connect from %1$s"), bind_addr_outgoing->string().c_str());
 	}
 
 
@@ -461,7 +491,7 @@ int main(int argc, char* argv[]) {
 		ev_io_init( &e_listen, listening_socket_ready_for_read, s_listen, EV_READ );
 		ev_io_start( EV_DEFAULT_ &e_listen );
 
-		LogInfo("Setup done, starting event loop");
+		LogInfo(_("Setup done, starting event loop"));
 		try {
 			ev_run(EV_DEFAULT_ 0);
 		} catch( std::exception &e ) {
@@ -470,6 +500,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	LogInfo("Exiting...");
+	LogInfo(_("Exiting cleanly..."));
 	return 0;
 }
