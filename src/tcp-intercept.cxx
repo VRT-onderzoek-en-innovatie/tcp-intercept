@@ -9,6 +9,10 @@
 
 #include <boost/ptr_container/ptr_list.hpp>
 
+#include "gettext.h"
+#define _(String) gettext(String)
+#define N_(String) String
+
 #include "../Socket/Socket.hxx"
 #include <libsimplelog.h>
 
@@ -262,6 +266,10 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 
 int main(int argc, char* argv[]) {
+	setlocale (LC_ALL, "");
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
+
 	// Default options
 	struct {
 		std::string pid_file;
@@ -346,7 +354,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	LogInfo(PACKAGE_NAME " version " PACKAGE_VERSION " (" PACKAGE_GITREVISION ") starting up");
+	LogInfo(_("%1$s version %2$s starting up"), PACKAGE_NAME, PACKAGE_VERSION " (" PACKAGE_GITREVISION ")");
 
 	Socket s_listen;
 	{ // Open listening socket
