@@ -33,6 +33,7 @@ Dependencies:
 Instructions:
 
 ```
+autopoint
 autoreconf -i
 ./configure
 make

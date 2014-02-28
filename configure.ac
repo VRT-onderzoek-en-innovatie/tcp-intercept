@@ -36,6 +36,8 @@ AS_IF([test x$enable_ipv6 == xyes], [AC_DEFINE([ENABLE_IPV6],[1],[Define to 1 to
 AC_PROG_CXX
 AC_PROG_CXXCPP
 AM_PROG_CC_C_O # per product options in Makefile.am
+AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT([external])
 
 # Checks for libraries.
 #######################
@@ -108,6 +110,7 @@ AC_CONFIG_FILES([
 	Socket/Makefile
 	src/Makefile
 	test/Makefile
+	po/Makefile.in
 	])
 AC_OUTPUT
 
