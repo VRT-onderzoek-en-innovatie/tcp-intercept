@@ -1,0 +1,23 @@
+# Dutch translations for tcp-intercept package.
+# Copyright (C) 2014 Free Software Foundation, Inc.
+# This file is distributed under the same license as the tcp-intercept package.
+# Niels Laukens <niels.lauken@vrt.be>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: tcp-intercept 0.0.3\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-28 10:40+0100\n"
+"PO-Revision-Date: 2014-02-28 10:41+0100\n"
+"Last-Translator: Niels Laukens <niels.laukens@vrt.be>\n"
+"Language-Team: Dutch\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/tcp-intercept.cxx:357
+#, c-format
+msgid "%1$s version %2$s starting up"
+msgstr "%1$s versie %2$s start op"
