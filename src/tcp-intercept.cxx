@@ -219,6 +219,8 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_client.non_blocking(true);
 
+		// TODO: is it really intercepted? Or was it directed to us?
+
 		/* TRANSLATORS: %1$s contains the connection ID
 		 */
 		LogInfo(_("%1$s: Connection intercepted"), new_con->id.c_str());

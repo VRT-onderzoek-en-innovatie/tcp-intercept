@@ -25,6 +25,9 @@ public:
 
 	virtual int const proto_family() const throw() =0;
 	virtual int const addr_family() const throw() =0;
+
+	virtual bool is_any() const throw() =0;
+	virtual bool is_loopback() const throw() =0;
 };
 
 std::auto_ptr<SockAddr> create(struct sockaddr_storage const *addr) throw(std::invalid_argument);
@@ -56,6 +59,9 @@ public:
 
 	virtual int const proto_family() const throw() { return PF_INET; }
 	virtual int const addr_family() const throw() { return AF_INET; }
+
+	virtual bool is_any() const throw() { return m_addr.sin_addr.s_addr == INADDR_ANY; }
+	virtual bool is_loopback() const throw() { return m_addr.sin_addr.s_addr == INADDR_LOOPBACK; }
 };
 
 
@@ -75,6 +81,9 @@ public:
 
 	virtual int const proto_family() const throw() { return PF_INET6; }
 	virtual int const addr_family() const throw() { return AF_INET6; }
+
+	virtual bool is_any() const throw() { return memcmp(&m_addr.sin6_addr, &in6addr_any, 16); }
+	virtual bool is_loopback() const throw() { return memcmp(&m_addr.sin6_addr, &in6addr_loopback, 16); }
 };
 
 } // namespace
