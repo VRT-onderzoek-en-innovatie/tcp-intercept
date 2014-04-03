@@ -108,6 +108,7 @@ AC_CONFIG_FILES([
 	Makefile
 	contrib/Makefile
 	Socket/Makefile
+	Socket/test/Makefile
 	src/Makefile
 	test/Makefile
 	po/Makefile.in

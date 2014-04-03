@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <netdb.h>
+#include <ifaddrs.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -117,6 +118,28 @@ std::auto_ptr< boost::ptr_vector< SockAddr > > resolve(std::string const &host, 
 	}
 
 	freeaddrinfo(res);
+
+	return ret;
+}
+
+std::auto_ptr< boost::ptr_vector< SockAddr > > getifaddrs() {
+	std::auto_ptr< boost::ptr_vector< SockAddr > > ret( new boost::ptr_vector< SockAddr> );
+
+	struct ifaddrs *ifap;
+	int rv = ::getifaddrs(&ifap);
+
+	while( ifap != NULL ) {
+		try {
+			std::auto_ptr<SockAddr> a( create( reinterpret_cast<sockaddr_storage*>(ifap->ifa_addr) ) );
+			ret->push_back( a.release() );
+		} catch( std::invalid_argument &e ) {
+			// Unknown address family, ignore
+		}
+	
+		ifap = ifap->ifa_next;
+	}
+
+	freeifaddrs(ifap);
 
 	return ret;
 }

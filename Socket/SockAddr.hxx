@@ -46,6 +46,8 @@ std::auto_ptr<SockAddr> translate(std::string const &host, unsigned short const 
 
 std::auto_ptr< boost::ptr_vector< SockAddr > > resolve(std::string const &host, std::string const &service, int const family = 0, int const socktype = 0, int const protocol = 0, bool const v4_mapped = false);
 
+std::auto_ptr< boost::ptr_vector< SockAddr > > getifaddrs();
+
 
 class Inet4 : public SockAddr {
 protected:
