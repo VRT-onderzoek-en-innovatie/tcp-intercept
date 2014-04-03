@@ -21,6 +21,8 @@ public:
 	virtual operator struct sockaddr const*() const throw() =0;
 	virtual socklen_t const addr_len() const throw() =0;
 
+	virtual bool operator ==(SockAddr const &b) const throw();
+
 	virtual std::string string() const throw(std::runtime_error) = 0;
 
 	virtual int const proto_family() const throw() =0;
@@ -56,6 +58,7 @@ public:
 	socklen_t const addr_len() const throw() { return sizeof(m_addr); }
 
 	virtual operator struct sockaddr const*() const throw() { return reinterpret_cast<struct sockaddr const*>(&m_addr); }
+	virtual bool operator ==(Inet4 const &b) const throw();
 
 	virtual std::string string() const throw(Errno);
 
@@ -80,6 +83,7 @@ public:
 	socklen_t const addr_len() const throw() { return sizeof(m_addr); }
 
 	virtual operator struct sockaddr const*() const throw() { return reinterpret_cast<struct sockaddr const*>(&m_addr); }
+	virtual bool operator ==(Inet6 const &b) const throw();
 
 	virtual std::string string() const throw(std::runtime_error);
 

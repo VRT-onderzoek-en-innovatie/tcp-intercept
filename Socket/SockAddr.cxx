@@ -11,6 +11,14 @@
 
 namespace SockAddr {
 
+bool SockAddr::operator ==(SockAddr const &b) const throw() {
+	if( this->addr_family() != b.addr_family() ) return false;
+	switch( this->addr_family() ) {
+	case AF_INET:	return this->operator==( dynamic_cast<Inet4 const &>(b) );
+	case AF_INET6:	return this->operator==( dynamic_cast<Inet6 const &>(b) );
+	}
+}
+
 std::auto_ptr<SockAddr> create(struct sockaddr_storage const *addr) throw(std::invalid_argument) {
 	if( addr == NULL ) throw std::invalid_argument("Empty address");
 
@@ -123,6 +131,11 @@ Inet4::Inet4(struct sockaddr_in const &addr) throw() {
 	m_addr.sin_addr.s_addr = addr.sin_addr.s_addr;
 }
 
+bool Inet4::operator ==(Inet4 const &b) const throw() {
+	return (m_addr.sin_port == b.m_addr.sin_port) &&
+	       (m_addr.sin_addr.s_addr == b.m_addr.sin_addr.s_addr);
+}
+
 std::string Inet4::string() const throw(Errno) {
 	std::string a("[");
 	{
@@ -157,6 +170,14 @@ Inet6::Inet6(struct sockaddr_in6 const &addr) throw() {
 	m_addr.sin6_flowinfo = addr.sin6_flowinfo;
 	for( unsigned int i = 0; i < sizeof(addr.sin6_addr.s6_addr); i++) m_addr.sin6_addr.s6_addr[i] = addr.sin6_addr.s6_addr[i];
 	m_addr.sin6_scope_id = addr.sin6_scope_id;
+}
+
+bool Inet6::operator ==(Inet6 const &b) const throw() {
+	if( m_addr.sin6_port != b.m_addr.sin6_port ) return false;
+	for( unsigned int i = 0; i < sizeof(m_addr.sin6_addr.s6_addr); i++) {
+		if( m_addr.sin6_addr.s6_addr[i] != b.m_addr.sin6_addr.s6_addr[i] ) return false;
+	}
+	return true;
 }
 
 std::string Inet6::string() const throw(std::runtime_error) {
