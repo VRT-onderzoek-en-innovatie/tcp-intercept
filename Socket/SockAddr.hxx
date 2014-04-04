@@ -21,7 +21,13 @@ public:
 	virtual operator struct sockaddr const*() const throw() =0;
 	virtual socklen_t const addr_len() const throw() =0;
 
-	virtual bool operator ==(SockAddr const &b) const throw();
+	virtual bool operator ==(SockAddr const &b) const throw() {
+		return this->port_equal(b) && this->address_equal(b);
+	}
+	virtual bool address_equal(SockAddr const &b) const throw();
+	virtual bool port_equal(SockAddr const &b) const throw() {
+		return this->port_number() == b.port_number();
+	}
 
 	virtual std::string string() const throw(std::runtime_error) = 0;
 
@@ -60,7 +66,9 @@ public:
 	socklen_t const addr_len() const throw() { return sizeof(m_addr); }
 
 	virtual operator struct sockaddr const*() const throw() { return reinterpret_cast<struct sockaddr const*>(&m_addr); }
-	virtual bool operator ==(Inet4 const &b) const throw();
+	virtual bool address_equal(Inet4 const &b) const throw() {
+		return (m_addr.sin_addr.s_addr == b.m_addr.sin_addr.s_addr);
+	}
 
 	virtual std::string string() const throw(Errno);
 
@@ -85,7 +93,12 @@ public:
 	socklen_t const addr_len() const throw() { return sizeof(m_addr); }
 
 	virtual operator struct sockaddr const*() const throw() { return reinterpret_cast<struct sockaddr const*>(&m_addr); }
-	virtual bool operator ==(Inet6 const &b) const throw();
+	virtual bool address_equal(Inet6 const &b) const throw() {
+		for( unsigned int i = 0; i < sizeof(m_addr.sin6_addr.s6_addr); i++) {
+			if( m_addr.sin6_addr.s6_addr[i] != b.m_addr.sin6_addr.s6_addr[i] ) return false;
+		}
+		return true;
+	}
 
 	virtual std::string string() const throw(std::runtime_error);
 
