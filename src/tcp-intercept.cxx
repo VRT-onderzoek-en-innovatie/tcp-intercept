@@ -21,6 +21,7 @@ FILE *logfile;
 
 static const int MAX_CONN_BACKLOG = 32;
 
+std::auto_ptr<SockAddr::SockAddr> bind_listen_addr;
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
 
 struct connection {
@@ -201,6 +202,30 @@ static void server_ready_read(EV_P_ ev_io *w, int revents) {
 }
 
 
+static bool our_sockaddr(SockAddr::SockAddr const *destination) throw(Errno) {
+	// Begin with quick checks
+	if( destination->port_number() != bind_listen_addr->port_number() ) {
+		return false;
+	}
+
+	if( ! bind_listen_addr->is_any() ) {
+		if( *destination == *bind_listen_addr ) {
+			// We've "intercepted" a connection that was directed to us
+			return true;
+		}
+	} else {
+		// Iterate over all local IPs
+		// This can't be cached, since local IPs change over time
+		std::auto_ptr< boost::ptr_vector< SockAddr::SockAddr> > local_addrs
+			= SockAddr::getifaddrs();
+		for( typeof(local_addrs->begin()) i = local_addrs->begin(); i != local_addrs->end(); i++ ) {
+			if( destination->address_equal(*i) ) return true;
+		}
+	}
+	return false;
+}
+
+
 static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	Socket* s_listen = reinterpret_cast<Socket*>( w->data );
 
@@ -219,7 +244,13 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 
 		new_con->s_client.non_blocking(true);
 
-		// TODO: is it really intercepted? Or was it directed to us?
+		if( our_sockaddr(server_addr.get()) ) {
+			/* TRANSLATORS: %1$s contains the connection ID
+			 */
+			LogWarn(_("%1$s: Connection directly to us, dropping"), new_con->id.c_str());
+			return;
+			// Sockets will go out of scope, and close() themselves
+		}
 
 		/* TRANSLATORS: %1$s contains the connection ID
 		 */
@@ -428,6 +459,8 @@ int main(int argc, char* argv[]) {
 		/* TRANSLATORS: %1$s contains the listening address
 		 */
 		LogInfo(_("Listening on %s"), (*bind_sa)[0].string().c_str());
+
+		bind_listen_addr.reset( bind_sa->release(bind_sa->begin()).release() ); // Transfer ownership; TODO: this should be simpeler that double release()
 	}
 
 	if( options.bind_addr_outgoing == "client" ) {
