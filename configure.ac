@@ -106,7 +106,6 @@ AC_DEFINE_UNQUOTED([CPPFLAGS],["$CPPFLAGS"],[Used C-preprocessor flags])
 ########
 AC_CONFIG_FILES([
 	Makefile
-	contrib/Makefile
 	Socket/Makefile
 	Socket/test/Makefile
 	src/Makefile
