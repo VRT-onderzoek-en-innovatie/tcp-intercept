@@ -1,6 +1,6 @@
 AC_PREREQ(2.61)
 AC_INIT([tcp-intercept], [0.0.3], [])
-AM_INIT_AUTOMAKE([dist-bzip2 -Wall])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 -Wall])
 LT_INIT
 
 AC_MSG_CHECKING([whether this is a Git repository])
