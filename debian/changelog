@@ -1,0 +1,5 @@
+tcp-intercept (1.0.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Niels Laukens <niels.laukens@vrt.be>  Fri, 18 Apr 2014 14:38:00 +0200
