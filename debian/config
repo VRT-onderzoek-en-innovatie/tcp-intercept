@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_version 2.0
+db_capb backup
+
+# Load our configuration file, if it exists
+[ -e /etc/default/tcp-intercept ] && . /etc/default/tcp-intercept
+
+# Use current values as default
+if [ -n "$BIND_LISTEN" ]; then
+	db_set tcp-intercept/bind-listen "$BIND_LISTEN"
+fi
+if [ -n "$BIND_OUTGOING" ]; then
+	db_set tcp-intercept/bind-outgoing "$BIND_OUTGOING"
+fi
+
+db_input medium tcp-intercept/bind-listen
+db_input medium tcp-intercept/bind-outgoing
+db_go

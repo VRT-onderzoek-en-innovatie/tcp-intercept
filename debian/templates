@@ -1,0 +1,20 @@
+Template: tcp-intercept/bind-listen
+Type: string
+Default: [0.0.0.0]:[5000]
+_Description: Address and port to listen on:
+ The address and port the tcp-intercept daemon listens on. Use square brackets
+ to suppress name-resolving.
+ .
+ You should keep the 0.0.0.0-part, but you can change the port number if this
+ conflicts. Be sure to change the iptables-rules accordingly
+
+
+Template: tcp-intercept/bind-outgoing
+Type: string
+Default: [0.0.0.0]:[0]
+_Description: Address (and port) to bind to for outgoing connections:
+ The address and port the tcp-intercept daemon uses for outgoing connections.
+ Use square brackets to suppress name-resolving.
+ .
+ You can use the special string "client" (without quotes) to spoof the original
+ source address.
