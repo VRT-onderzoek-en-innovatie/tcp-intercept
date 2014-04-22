@@ -43,6 +43,7 @@ AM_GNU_GETTEXT([external])
 #######################
 AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
 AC_CHECK_LIB(simplelog, LogAtLevel_nodebug, , [AC_MSG_ERROR([Couldn't find libsimplelog])]) dnl '
+AC_CHECK_LIB(daemon, daemon_fork, , [AC_MSG_ERROR([Couldn't find libdaemon])]) dnl '
 
 # Checks for header files.
 ##########################
@@ -121,6 +122,7 @@ ${PACKAGE_NAME} version ${PACKAGE_VERSION} (${PACKAGE_GITREVISION})
  Prefix:       '${prefix}'
  C Compiler:   '${CC} ${CFLAGS} ${CPPFLAGS}'
  C++ Compiler: '${CXX} ${CXXFLAGS} ${CPPFLAGS}'
+ Linker:       '${LD} ${LDFLAGS}'
  Libraries:    '${LIBS}'
 
  Configured with:

@@ -15,6 +15,7 @@
 
 #include "../Socket/Socket.hxx"
 #include <libsimplelog.h>
+#include <libdaemon/daemon.h>
 
 std::string logfilename;
 FILE *logfile;
@@ -327,10 +328,12 @@ int main(int argc, char* argv[]) {
 
 	// Default options
 	struct {
+		bool fork;
 		std::string pid_file;
 		std::string bind_addr_listen;
 		std::string bind_addr_outgoing;
 	} options = {
+		/* fork = */ true,
 		/* pid_file = */ "",
 		/* bind_addr_listen = */ "[0.0.0.0]:[5000]",
 		/* bind_addr_outgoing = */ "[0.0.0.0]:[0]"
@@ -341,6 +344,7 @@ int main(int argc, char* argv[]) {
 		struct option longopts[] = {
 			{"help",			no_argument, NULL, 'h'},
 			{"version",			no_argument, NULL, 'V'},
+			{"foreground",		no_argument, NULL, 'f'},
 			{"pid-file",		required_argument, NULL, 'p'},
 			{"bind-listen",		required_argument, NULL, 'b'},
 			{"bind-outgoing",	required_argument, NULL, 'B'},
@@ -358,6 +362,7 @@ int main(int argc, char* argv[]) {
 					"Options:\n"
 					"  -h --help                       Displays this help message and exits\n"
 					"  -V --version                    Displays the version and exits\n"
+					"  -f --foreground                 Don't fork and detach\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
 					"                                  usefull when running as a daemon\n"
 					"  --bind-listen -b host:port      Bind to the specified address for incomming\n"
@@ -393,6 +398,9 @@ int main(int argc, char* argv[]) {
 #endif
 				         );
 				exit(EX_OK);
+			case 'f':
+				options.fork = false;
+				break;
 			case 'p':
 				options.pid_file = optarg;
 				break;
@@ -502,6 +510,34 @@ int main(int argc, char* argv[]) {
 		LogInfo(_("Outgoing connections will connect from %1$s"), bind_addr_outgoing->string().c_str());
 	}
 
+	// Fork
+	if( options.fork ) {
+		/* Set indetification string for the daemon for both syslog and PID file */
+		daemon_pid_file_ident = daemon_log_ident = daemon_ident_from_argv0(argv[0]);
+
+		/* Prepare for return value passing from the initialization procedure of the daemon process */
+		if (daemon_retval_init() < 0) {
+			LogError(_("Failed to create pipe."));
+			exit(EX_OSERR);
+		}
+
+		pid_t child = daemon_fork();
+		if( child < 0 ) {
+			LogError(_("Could not fork(): %s"), strerror(errno));
+			daemon_retval_done();
+			exit(EX_OSERR);
+		} else if( child > 0 ) { // parent
+			int ret;
+			/* Wait for 20 seconds for the return value passed from the daemon process */
+			if ((ret = daemon_retval_wait(20)) < 0) {
+				LogError(_("Could not recieve return value from daemon process: %s"), strerror(errno));
+				exit(EX_OSERR);
+			}
+			exit(ret);
+		}
+		// Child
+		daemon_retval_send(0);
+	}
 
 	{
 		ev_signal ev_sigint_watcher;

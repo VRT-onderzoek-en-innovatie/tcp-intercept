@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Niels Laukens <niels.laukens@vrt.be>
 Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf,
- libsimplelog-dev, libev-dev
+ libsimplelog-dev, libev-dev, libdaemon-dev
 Standards-Version: 3.9.3
 Homepage: https://github.com/VRT-onderzoek-en-innovatie/tcp-intercept
 Vcs-Git: git://github.com/VRT-onderzoek-en-innovatie/tcp-intercept.git
