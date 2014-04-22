@@ -320,6 +320,10 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	connections.push_back( new_con.release() );
 }
 
+const char* pidfile = NULL;
+const char* return_pidfile() {
+	return pidfile;
+}
 
 int main(int argc, char* argv[]) {
 	setlocale (LC_ALL, "");
@@ -329,12 +333,10 @@ int main(int argc, char* argv[]) {
 	// Default options
 	struct {
 		bool fork;
-		std::string pid_file;
 		std::string bind_addr_listen;
 		std::string bind_addr_outgoing;
 	} options = {
 		/* fork = */ true,
-		/* pid_file = */ "",
 		/* bind_addr_listen = */ "[0.0.0.0]:[5000]",
 		/* bind_addr_outgoing = */ "[0.0.0.0]:[0]"
 		};
@@ -402,7 +404,7 @@ int main(int argc, char* argv[]) {
 				options.fork = false;
 				break;
 			case 'p':
-				options.pid_file = optarg;
+				pidfile = optarg;
 				break;
 			case 'b':
 				options.bind_addr_listen = optarg;
@@ -418,6 +420,9 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
+
+	/* Set indetification string for the daemon for both syslog and PID file */
+	daemon_pid_file_ident = daemon_log_ident = daemon_ident_from_argv0(argv[0]);
 
 	LogInfo(_("%1$s version %2$s starting up"), PACKAGE_NAME, PACKAGE_VERSION " (" PACKAGE_GITREVISION ")");
 
@@ -510,11 +515,7 @@ int main(int argc, char* argv[]) {
 		LogInfo(_("Outgoing connections will connect from %1$s"), bind_addr_outgoing->string().c_str());
 	}
 
-	// Fork
 	if( options.fork ) {
-		/* Set indetification string for the daemon for both syslog and PID file */
-		daemon_pid_file_ident = daemon_log_ident = daemon_ident_from_argv0(argv[0]);
-
 		/* Prepare for return value passing from the initialization procedure of the daemon process */
 		if (daemon_retval_init() < 0) {
 			LogError(_("Failed to create pipe."));
@@ -535,9 +536,18 @@ int main(int argc, char* argv[]) {
 			}
 			exit(ret);
 		}
-		// Child
-		daemon_retval_send(0);
+		// Child continues
 	}
+
+	if( pidfile != NULL ) { // PID-file
+		daemon_pid_file_proc = return_pidfile;
+		if( daemon_pid_file_create() ) {
+			daemon_retval_send(EX_OSERR);
+			exit(EX_OSERR);
+		}
+	}
+
+	daemon_retval_send(0);
 
 	{
 		ev_signal ev_sigint_watcher;
@@ -572,5 +582,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	LogInfo(_("Exiting cleanly..."));
-	return 0;
+	daemon_pid_file_remove();
+	return EX_OK;
 }
