@@ -46,7 +46,7 @@ do_start()
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
-		-f -b "$BIND_LISTEN" -B "$BIN_OUTGOING" -l "$LOGFILE" \
+		-f -b "$BIND_LISTEN" -B "$BIND_OUTGOING" -l "$LOGFILE" \
 		$DAEMON_ARGS \
 		|| return 2
 }
