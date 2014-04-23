@@ -366,7 +366,8 @@ int main(int argc, char* argv[]) {
 					"  -V --version                    Displays the version and exits\n"
 					"  -f --foreground                 Don't fork and detach\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
-					"                                  usefull when running as a daemon\n"
+					"                                  usefull when running as a daemon. Must be an\n"
+					"                                  absolute path.\n"
 					"  --bind-listen -b host:port      Bind to the specified address for incomming\n"
 					"                                  connections.\n"
 					"                                  host and port resolving can be bypassed by\n"
@@ -537,6 +538,10 @@ int main(int argc, char* argv[]) {
 			exit(ret);
 		}
 		// Child continues
+
+		/* Close all FDs; 0, 1 and 2 are kept open anyway and point to
+		 * /dev/null (done by daemon_fork()) */
+		daemon_close_all(-1);
 	}
 
 	if( pidfile != NULL ) { // PID-file
@@ -547,6 +552,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	// Let our parent know that we're doing fine
 	daemon_retval_send(0);
 
 	{

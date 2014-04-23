@@ -43,7 +43,8 @@ AM_GNU_GETTEXT([external])
 #######################
 AC_CHECK_LIB(ev, ev_run, , [AC_MSG_ERROR([Couldn't find libev])]) dnl '
 AC_CHECK_LIB(simplelog, LogAtLevel_nodebug, , [AC_MSG_ERROR([Couldn't find libsimplelog])]) dnl '
-AC_CHECK_LIB(daemon, daemon_fork, , [AC_MSG_ERROR([Couldn't find libdaemon])]) dnl '
+AC_CHECK_LIB(daemon, daemon_fork, [: do nothing yet, wait for more detailed test below], [AC_MSG_ERROR([Couldn't find libdaemon])]) dnl '
+AC_CHECK_LIB(daemon, daemon_close_all, , [AC_MSG_ERROR([Couldn't find a recent enough libdaemon])]) dnl '
 
 # Checks for header files.
 ##########################
