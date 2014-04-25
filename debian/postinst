@@ -5,14 +5,41 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
-TMPFILE=`mktemp -t tcp-intercept`
-cat /etc/default/tcp-intercept > "$TMPFILE"
+TMPFILE=`mktemp -t tcp-intercept.XXXXXX`
+if [ -f "/etc/default/tcp-intercept" ]; then
+	cat "/etc/default/tcp-intercept.conf" > "$TMPFILE"
+else
+	cat > "$TMPFILE" <<-EOT
+	# Defaults for tcp-intercept initscript
+	# sourced by /etc/init.d/tcp-intercept
+	# installed at /etc/default/tcp-intercept by the maintainer scripts
+
+	#
+	# This is a POSIX shell fragment
+	#
+
+	# Use square brackets to supress name lookup
+	BIND_LISTEN="will be filled in below"
+	BIND_OUTGOING="will be filled in below"
+	LOGFILE="/var/log/tcp-intercept.log"
+
+	# Additional options that are passed to the Daemon.
+	DAEMON_OPTS=""
+	EOT
+fi
+
+subst () { # VAR newvalue
+	if ! grep -q "^\s*$1=" "$TMPFILE"; then
+		echo "$1=" >> "$TMPFILE"
+	fi
+	sed -i -e "s/^\s*$1=.*/$1=\"$2\"/" "$TMPFILE"
+}
 
 db_get tcp-intercept/bind-listen
-sed -i -e "s/^\s*\(BIND_LISTEN\)=.*/\1=\"$RET\"/" "$TMPFILE"
+subst BIND_LISTEN $RET
 
 db_get tcp-intercept/bind-outgoing
-sed -i -e "s/^\s*\(BIND_OUTGOING\)=.*/\1=\"$RET\"/" "$TMPFILE"
+subst BIND_OUTGOING $RET
 
 mv "$TMPFILE" /etc/default/tcp-intercept
 
