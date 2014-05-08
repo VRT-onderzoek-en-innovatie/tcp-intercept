@@ -7,7 +7,7 @@ set -e
 
 TMPFILE=`mktemp -t tcp-intercept.XXXXXX`
 if [ -f "/etc/default/tcp-intercept" ]; then
-	cat "/etc/default/tcp-intercept.conf" > "$TMPFILE"
+	cat "/etc/default/tcp-intercept" > "$TMPFILE"
 else
 	cat > "$TMPFILE" <<-EOT
 	# Defaults for tcp-intercept initscript
