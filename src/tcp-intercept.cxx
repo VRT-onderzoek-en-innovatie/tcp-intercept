@@ -541,7 +541,7 @@ int main(int argc, char* argv[]) {
 
 		/* Close all FDs; 0, 1 and 2 are kept open anyway and point to
 		 * /dev/null (done by daemon_fork()) */
-		daemon_close_all(-1);
+		daemon_close_all(s_listen, -1);
 	}
 
 	if( pidfile != NULL ) { // PID-file
