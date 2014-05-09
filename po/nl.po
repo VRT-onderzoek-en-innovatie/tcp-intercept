@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tcp-intercept 0.0.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-22 14:16+0200\n"
+"POT-Creation-Date: 2014-05-09 14:44+0200\n"
 "PO-Revision-Date: 2014-02-28 10:41+0100\n"
 "Last-Translator: Niels Laukens <niels.laukens@vrt.be>\n"
 "Language-Team: Dutch\n"
@@ -109,14 +109,16 @@ msgstr ""
 msgid "%1$s: Connecting %2$s-->%3$s"
 msgstr ""
 
-#: src/tcp-intercept.cxx:362
+#: src/tcp-intercept.cxx:364
 msgid ""
 "Options:\n"
 "  -h --help                       Displays this help message and exits\n"
 "  -V --version                    Displays the version and exits\n"
 "  -f --foreground                 Don't fork and detach\n"
 "  --pid-file -p file              The file to write the PID to, especially\n"
-"                                  usefull when running as a daemon\n"
+"                                  usefull when running as a daemon. Must be "
+"an\n"
+"                                  absolute path.\n"
 "  --bind-listen -b host:port      Bind to the specified address for "
 "incomming\n"
 "                                  connections.\n"
@@ -139,7 +141,7 @@ msgid ""
 "  --log -l file                   Log to file\n"
 msgstr ""
 
-#: src/tcp-intercept.cxx:385
+#: src/tcp-intercept.cxx:388
 #, c-format
 msgid ""
 "%1$s version %2$s\n"
@@ -150,61 +152,75 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/tcp-intercept.cxx:395
+#: src/tcp-intercept.cxx:398
 msgid "yes"
 msgstr ""
 
-#: src/tcp-intercept.cxx:397
+#: src/tcp-intercept.cxx:400
 msgid "no"
 msgstr ""
 
-#: src/tcp-intercept.cxx:422
+#: src/tcp-intercept.cxx:428
 #, c-format
 msgid "%1$s version %2$s starting up"
 msgstr "%1$s versie %2$s start op"
 
 #. TRANSLATORS: %1$s contains the string passed as option
 #.
-#: src/tcp-intercept.cxx:438 src/tcp-intercept.cxx:490
+#: src/tcp-intercept.cxx:444 src/tcp-intercept.cxx:496
 #, c-format
 msgid "Invalid bind string \"%1$s\": could not find ':'\n"
 msgstr ""
 
-#: src/tcp-intercept.cxx:447 src/tcp-intercept.cxx:499
+#: src/tcp-intercept.cxx:453 src/tcp-intercept.cxx:505
 #, c-format
 msgid "Can not bind to \"%1$s\": Could not resolve\n"
 msgstr ""
 
-#: src/tcp-intercept.cxx:451 src/tcp-intercept.cxx:502
+#: src/tcp-intercept.cxx:457 src/tcp-intercept.cxx:508
 #, c-format
 msgid "Can not bind to \"%1$s\": Resolves to multiple entries:\n"
 msgstr ""
 
 #. TRANSLATORS: %1$s contains the listening address
 #.
-#: src/tcp-intercept.cxx:469
+#: src/tcp-intercept.cxx:475
 #, c-format
 msgid "Listening on %s"
 msgstr ""
 
-#: src/tcp-intercept.cxx:476
+#: src/tcp-intercept.cxx:482
 msgid "Outgoing connections will connect from original source address"
 msgstr ""
 
-#: src/tcp-intercept.cxx:510
+#: src/tcp-intercept.cxx:516
 #, c-format
 msgid "Outgoing connections will connect from %1$s"
 msgstr ""
 
-#: src/tcp-intercept.cxx:519
-#, c-format
-msgid "Could not fork(): %s\n"
+#: src/tcp-intercept.cxx:522
+msgid "Failed to create pipe."
 msgstr ""
 
-#: src/tcp-intercept.cxx:551
+#: src/tcp-intercept.cxx:528
+#, c-format
+msgid "Could not fork(): %s"
+msgstr ""
+
+#: src/tcp-intercept.cxx:535
+#, c-format
+msgid "Could not recieve return value from daemon process: %s"
+msgstr ""
+
+#: src/tcp-intercept.cxx:538
+#, c-format
+msgid "Child process [%1$d] forked succesfully, it signaled %2$d"
+msgstr ""
+
+#: src/tcp-intercept.cxx:582
 msgid "Setup done, starting event loop"
 msgstr ""
 
-#: src/tcp-intercept.cxx:560
+#: src/tcp-intercept.cxx:591
 msgid "Exiting cleanly..."
 msgstr ""
