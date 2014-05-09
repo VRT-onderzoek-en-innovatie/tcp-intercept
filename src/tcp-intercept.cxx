@@ -535,6 +535,7 @@ int main(int argc, char* argv[]) {
 				LogError(_("Could not recieve return value from daemon process: %s"), strerror(errno));
 				exit(EX_OSERR);
 			}
+			LogInfo(_("Child process [%1$d] forked succesfully, it signaled %2$d"), child, ret);
 			exit(ret);
 		}
 		// Child continues
