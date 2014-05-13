@@ -1,5 +1,5 @@
 AC_PREREQ(2.61)
-AC_INIT([tcp-intercept], [1.0.0], [])
+AC_INIT([tcp-intercept], [1.0.1], [])
 AM_INIT_AUTOMAKE([foreign dist-bzip2 -Wall])
 LT_INIT
 

@@ -1,3 +1,9 @@
+tcp-intercept (1.0.1) unstable; urgency=low
+
+  * Version bump only at the moment
+
+ -- Niels Laukens <niels.laukens@vrt.be>  Tue, 13 May 2014 12:18:52 +0200
+
 tcp-intercept (1.0.0) unstable; urgency=low
 
   * Initial Release.
