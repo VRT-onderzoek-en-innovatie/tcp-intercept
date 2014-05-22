@@ -29,6 +29,7 @@ Dependencies:
 
 * libev (`libev-dev` on debian-based systems)
 * libdaemon (`libdaemon-dev` on debian-based systems)
+* ptr_list from libboost (`libboost-dev` on debian-based systems)
 * libsimplelog (https://github.com/VRT-onderzoek-en-innovatie/libsimplelog)
 
 Instructions:
