@@ -25,6 +25,10 @@ needed.
 Compiling and installing
 ------------------------
 
+If you use a Debian-based system, you can build a `.deb` file by running
+`dpkg-buildpackage -us -uc`, and install it with `dpkg -i generated-file.deb`.
+You need to have the dependencies installed before you can build.
+
 Dependencies:
 
 * libev (`libev-dev` on debian-based systems)
