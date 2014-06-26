@@ -122,7 +122,13 @@ inline static void peer_ready_write(EV_P_ struct connection* con,
 	// buf.length() > 0
 	try {
 		ssize_t rv = tx.send(buf.data(), buf.length());
-		assert( rv > 0 );
+		if( rv == 0 ) {
+			// Weird situation. FD was ready for write, but send() returned 0
+			// anyway... Retry later
+			LogWarn(_("%1$s %2$s: could not send(), but was ready for write"),
+				con->id.c_str(), dir.c_str());
+			return;
+		}
 		buf = buf.substr( rv );
 	} catch( Errno &e ) {
 		/* TRANSLATORS: %1$s contains the connection ID,
