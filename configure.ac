@@ -106,7 +106,9 @@ AC_DEFINE_UNQUOTED([CPPFLAGS],["$CPPFLAGS"],[Used C-preprocessor flags])
 
 # Output
 ########
+AS_AC_EXPAND(EXPANDED_sbindir, "$sbindir")
 AC_CONFIG_FILES([
+	debian/init.d
 	Makefile
 	Socket/Makefile
 	Socket/test/Makefile
