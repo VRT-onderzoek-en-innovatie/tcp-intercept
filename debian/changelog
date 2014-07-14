@@ -1,3 +1,9 @@
+tcp-intercept (1.0.2) UNRELEASED; urgency=low
+
+  * 
+
+ -- Niels Laukens <niels.laukens@vrt.be>  Mon, 14 Jul 2014 15:41:31 +0200
+
 tcp-intercept (1.0.1) unstable; urgency=low
 
   * Minor bugfixes of corner cases
