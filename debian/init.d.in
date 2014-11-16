@@ -24,6 +24,13 @@ SCRIPTNAME=/etc/init.d/$NAME
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
 
+# Default values of the configuration variables
+CONTROL_NETWORK=0 # this scripts configures routes
+CONTROL_IPTABLES=0 # this scripts configures iptables
+IP_ROUTE_TABLE_NUMBER=5 # free routing table number to use
+FWMARK="0x1/0x1" # Distinguishing FWmark bit to use
+LISTEN_PORT=5000 # Port where tcp-intercept is listening on
+
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 
@@ -49,6 +56,28 @@ do_start()
 		-p "$PIDFILE" -b "$BIND_LISTEN" -B "$BIND_OUTGOING" -l "$LOGFILE" \
 		$DAEMON_ARGS \
 		|| return 2
+}
+
+network_start()
+{
+	if ! ip rule show | grep "fwmark $FWMARK" >/dev/null; then
+		ip rule add fwmark $FWMARK table $IP_ROUTE_TABLE_NUMBER
+	fi
+	ip route add local 0.0.0.0/0 dev lo table $IP_ROUTE_TABLE_NUMBER 2>/dev/null
+}
+
+firewall_start()
+{
+	iptables -t mangle -N tproxy 2>/dev/null
+	iptables -t mangle -F tproxy
+	iptables -t mangle -A tproxy -p tcp -m socket -j MARK --set-mark $FWMARK
+	iptables -t mangle -A tproxy -p tcp -m socket -j RETURN
+	iptables -t mangle -A tproxy -p tcp -m addrtype --dst-type LOCAL -j RETURN
+	iptables -t mangle -A tproxy -p tcp -j TPROXY --on-port $LISTEN_PORT \
+		--tproxy-mark $FWMARK
+	if ! iptables -t mangle -nL PREROUTING | grep tproxy >/dev/null; then
+		iptables -t mangle -A PREROUTING -j tproxy
+	fi
 }
 
 #
@@ -77,6 +106,22 @@ do_stop()
 	return "$RETVAL"
 }
 
+network_stop()
+{
+	ip rule del fwmark $FWMARK table $IP_ROUTE_TABLE_NUMBER 2>/dev/null
+	ip route flush table $IP_ROUTE_TABLE_NUMBER
+}
+
+firewall_stop()
+{
+	if iptables -t mangle -nL PREROUTING --line-numbers | grep tproxy >/dev/null; then
+		line=`iptables -t mangle -nL PREROUTING --line-numbers | grep tproxy | cut -f 1 -d " "`
+		iptables -t mangle -D PREROUTING $line
+		iptables -t mangle -F tproxy
+		iptables -t mangle -X tproxy
+	fi
+}
+
 #
 # Function that sends a SIGHUP to the daemon/service
 #
@@ -94,6 +139,8 @@ case "$1" in
   start)
     [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC " "$NAME"
     do_start
+    [ $CONTROL_NETWORK = 1 ] && network_start
+    [ $CONTROL_IPTABLES = 1 ] && firewall_start
     case "$?" in
 		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
 		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
@@ -101,6 +148,8 @@ case "$1" in
   ;;
   stop)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+	[ $CONTROL_IPTABLES = 1 ] && firewall_stop
+	[ $CONTROL_NETWORK = 1 ] && network_stop
 	do_stop
 	case "$?" in
 		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
