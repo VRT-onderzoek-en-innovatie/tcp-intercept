@@ -263,8 +263,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		 */
 		LogInfo(_("%1$s: Connection intercepted"), new_con->id.c_str());
 
-		// TODO: make IPv6 ready
-		new_con->s_server = Socket::socket(AF_INET, SOCK_STREAM, 0);
+		new_con->s_server = Socket::socket(server_addr->addr_family(), SOCK_STREAM, 0);
 
 		if( bind_addr_outgoing.get() != NULL ) {
 			new_con->s_server.bind( *bind_addr_outgoing );
