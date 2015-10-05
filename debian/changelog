@@ -1,8 +1,14 @@
-tcp-intercept (1.0.2) UNRELEASED; urgency=low
+tcp-intercept (1.0.3) UNRELEASED; urgency=low
 
   * 
 
- -- Niels Laukens <niels.laukens@vrt.be>  Mon, 14 Jul 2014 15:41:31 +0200
+ -- Niels Laukens <niels.laukens@vrt.be>  Mon, 5 Oct 2015 10:17:03 +0200
+
+tcp-intercept (1.0.2) unstable; urgency=low
+
+  * Enhanced IPv6 compatibility
+
+ -- Niels Laukens <niels.laukens@vrt.be>  Mon, 5 Oct 2015 10:17:03 +0200
 
 tcp-intercept (1.0.1) unstable; urgency=low
 
