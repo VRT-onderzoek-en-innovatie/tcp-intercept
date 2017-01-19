@@ -54,10 +54,12 @@ cleaning up connections that hang becasue on of the peers lost connectivity
 without tcp-inntercept being aware of it.
 
 You may use the procfs or sysctl interface to configure the kernel parameters.
+
 procfs:
  * /proc/sys/net/ipv4/tcp_keepalive_time
  * /proc/sys/net/ipv4/tcp_keepalive_intvl
  * /proc/sys/net/ipv4/tcp_keepalive_probes
+ 
 sysctl:
  * net.ipv4.tcp_keepalive_time
  * net.ipv4.tcp_keepalive_intvl
