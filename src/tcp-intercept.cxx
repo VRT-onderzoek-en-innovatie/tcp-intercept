@@ -9,6 +9,7 @@
 
 #include <boost/ptr_container/ptr_list.hpp>
 
+#include <ctime>
 #include "gettext.h"
 #define _(String) gettext(String)
 #define N_(String) String
@@ -16,6 +17,7 @@
 #include "../Socket/Socket.hxx"
 #include <libsimplelog.h>
 #include <libdaemon/daemon.h>
+#include <netinet/tcp.h>
 
 std::string logfilename;
 FILE *logfile;
@@ -36,7 +38,8 @@ struct connection {
 	ev_io e_s_read, e_s_write;
 
 	std::string buf_c_to_s, buf_s_to_c;
-	bool con_open_c_to_s, con_open_s_to_c;
+	bool con_open_c_to_s, con_open_s_to_c, is_shut;
+	std::time_t shut_timer;
 };
 boost::ptr_list< struct connection > connections;
 
@@ -64,6 +67,16 @@ void received_sigpipe(EV_P_ ev_signal *w, int revents) throw() {
 	LogDebug(_("Received SIGPIPE, ignoring"));
 }
 
+bool conn_shutstuck(struct connection *con){
+	//LogInfo(_("%1$s : Need to check shutdown state and force close!!"), con->id.c_str());
+	std::time_t now = time(NULL);
+	double shut_since = difftime(now,con->shut_timer);
+	if(shut_since > 180){
+		//LogInfo(_("%1$s : NEED to close it ...!!"), con->id.c_str());
+		return true;
+	}
+	return false;
+}
 
 void kill_connection(EV_P_ struct connection *con) {
 	// Remove from event loops
@@ -77,10 +90,19 @@ void kill_connection(EV_P_ struct connection *con) {
 
 	// Find and erase this connection in the list
 	// TODO scaling issue: this is O(n) with the number of connections.
+	// Clean connections stuck in CLOSE_WAIT and FIN_WAIT states
 	for( typeof(connections.begin()) i = connections.begin(); i != connections.end(); ++i ) {
 		if( &(*i) == con ) {
-			connections.erase(i);
-			break; // Stop searching
+			connections.erase(i--); //update itrator to point back to shifted element after erasing	
+		}else if(i->is_shut){
+			if (conn_shutstuck(&(*i))) {
+				LogInfo(_("%1$s : Remove shut con from event list and erase it!!"), i->id.c_str());
+				ev_io_stop(EV_A_ &i->e_c_read );
+				ev_io_stop(EV_A_ &i->e_c_write );
+				ev_io_stop(EV_A_ &i->e_s_read );
+				ev_io_stop(EV_A_ &i->e_s_write );
+				connections.erase(i--); //update itrator to point back to shifted element after erasing	
+			}
 		}
 	}
 }
@@ -144,7 +166,7 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
                                    bool &con_open,
                                    Socket &rx, ev_io *e_rx_read,
                                    std::string &buf,
-                                   Socket &tx, ev_io *e_tx_write ) {
+                                   Socket &tx, ev_io *e_tx_write, bool &is_shut ) {
 	// TODO allow read when we still have data in the buffer to streamline things
 	assert( buf.length() == 0 );
 	try {
@@ -156,6 +178,11 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 			 */
 			LogInfo(_("%1$s %2$s: EOF"), con->id.c_str(), dir.c_str());
 			tx.shutdown(SHUT_WR); // shutdown() does not block
+			std::time_t now = time(NULL);
+			//LogInfo(_("%1$s %2$s: Initialize con shutdown timer!!"), con->id.c_str(), dir.c_str());
+			con->shut_timer = now;
+			//LogInfo(_("%1$s %2$s: Mark conn as shutdown"), con->id.c_str(), dir.c_str());
+			is_shut = true;
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
 				// Connection fully closed, clean up
@@ -197,7 +224,7 @@ static void client_ready_read(EV_P_ ev_io *w, int revents) {
 	return peer_ready_read(EV_A_ con, _("C>S"), con->con_open_c_to_s,
 	                       con->s_client, &con->e_c_read,
 	                       con->buf_c_to_s,
-	                       con->s_server, &con->e_s_write);
+	                       con->s_server, &con->e_s_write, con->is_shut);
 }
 static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
@@ -205,7 +232,7 @@ static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	return peer_ready_read(EV_A_ con, _("S>C"), con->con_open_s_to_c,
 	                       con->s_server, &con->e_s_read,
 	                       con->buf_s_to_c,
-	                       con->s_client, &con->e_c_write);
+	                       con->s_client, &con->e_c_write, con->is_shut);
 }
 
 
@@ -250,6 +277,7 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->id.append( server_addr->string() );
 
 		new_con->s_client.non_blocking(true);
+		int value = 1;
 
 		if( our_sockaddr(server_addr.get()) ) {
 			/* TRANSLATORS: %1$s contains the connection ID
@@ -271,10 +299,13 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 #if HAVE_DECL_IP_TRANSPARENT
 			int value = 1;
 			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
+			new_con->s_server.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &value, sizeof(value));
+			//Take care of socks hanging in ESTABLISHED state
+			new_con->s_server.setsockopt(SOL_SOCKET,SO_KEEPALIVE, &value, sizeof(value));
+			
 #endif
 			new_con->s_server.bind( *client_addr );
 		}
-
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
 		LogError(_("Error: %s"), e.what());
@@ -294,7 +325,8 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->e_s_write.data =
 			new_con.get();
 	new_con->con_open_c_to_s = new_con->con_open_s_to_c = true;
-
+	new_con->is_shut = false;
+	new_con->shut_timer = 0;
 	try {
 		new_con->s_server.connect( *server_addr );
 		// Connection succeeded right away, flag the callback right away
@@ -473,6 +505,9 @@ int main(int argc, char* argv[]) {
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
 		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
+		s_listen.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &value, sizeof(value));
+		//Take care of socks hanging in Established state
+		s_listen.setsockopt(SOL_SOCKET,SO_KEEPALIVE, &value, sizeof(value));
 #endif
 
 		/* TRANSLATORS: %1$s contains the listening address
