@@ -66,6 +66,17 @@ sysctl:
  * net.ipv4.tcp_keepalive_probes
 
 
+TCP low latency support
+-----------------------
+tcp-intercept enables the support for low latency transmission of packets. TCP by
+default tries to optimise for high troughput. In doing so, it collects very small 
+data segments and sends them out as one big segment. This could have very negative 
+effect on latency/jitter sensitive applications (real time apps). Thus, enabling
+the tcp option TCP_NODELAY instructs the kernel to send data as soon as they are
+sent by the application to the kernel.
+To benefit from this feature you need to enable the corresponding kernel parameter:
+ * net.ipv4.tcp_low_latency = 1
+
 iptables setup
 -------------
 ```
