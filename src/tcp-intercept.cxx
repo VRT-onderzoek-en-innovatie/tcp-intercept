@@ -166,7 +166,7 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
                                    bool &con_open,
                                    Socket &rx, ev_io *e_rx_read,
                                    std::string &buf,
-                                   Socket &tx, ev_io *e_tx_write, bool &is_shut ) {
+                                   Socket &tx, ev_io *e_tx_write) {
 	// TODO allow read when we still have data in the buffer to streamline things
 	assert( buf.length() == 0 );
 	try {
@@ -182,7 +182,7 @@ inline static void peer_ready_read(EV_P_ struct connection* con,
 			//LogInfo(_("%1$s %2$s: Initialize con shutdown timer!!"), con->id.c_str(), dir.c_str());
 			con->shut_timer = now;
 			//LogInfo(_("%1$s %2$s: Mark conn as shutdown"), con->id.c_str(), dir.c_str());
-			is_shut = true;
+			con->is_shut = true;
 			con_open = false;
 			if( !con->con_open_s_to_c && !con->con_open_c_to_s ) {
 				// Connection fully closed, clean up
@@ -224,7 +224,7 @@ static void client_ready_read(EV_P_ ev_io *w, int revents) {
 	return peer_ready_read(EV_A_ con, _("C>S"), con->con_open_c_to_s,
 	                       con->s_client, &con->e_c_read,
 	                       con->buf_c_to_s,
-	                       con->s_server, &con->e_s_write, con->is_shut);
+	                       con->s_server, &con->e_s_write);
 }
 static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	struct connection* con = reinterpret_cast<struct connection*>( w->data );
@@ -232,7 +232,7 @@ static void server_ready_read(EV_P_ ev_io *w, int revents) {
 	return peer_ready_read(EV_A_ con, _("S>C"), con->con_open_s_to_c,
 	                       con->s_server, &con->e_s_read,
 	                       con->buf_s_to_c,
-	                       con->s_client, &con->e_c_write, con->is_shut);
+	                       con->s_client, &con->e_c_write);
 }
 
 
@@ -270,6 +270,11 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	try {
 		new_con->s_client = s_listen->accept(&client_addr);
 
+		//TODO - setting sock options on s_client still does not work!!
+		int val = 1;
+		new_con->s_client.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
+		new_con->s_client.setsockopt(SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
+
 		server_addr = new_con->s_client.getsockname();
 
 		new_con->id.assign( client_addr->string() );
@@ -277,8 +282,6 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->id.append( server_addr->string() );
 
 		new_con->s_client.non_blocking(true);
-		int value = 1;
-
 		if( our_sockaddr(server_addr.get()) ) {
 			/* TRANSLATORS: %1$s contains the connection ID
 			 */
@@ -299,10 +302,6 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 #if HAVE_DECL_IP_TRANSPARENT
 			int value = 1;
 			new_con->s_server.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
-			new_con->s_server.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &value, sizeof(value));
-			//Take care of socks hanging in ESTABLISHED state
-			new_con->s_server.setsockopt(SOL_SOCKET,SO_KEEPALIVE, &value, sizeof(value));
-			
 #endif
 			new_con->s_server.bind( *client_addr );
 		}
@@ -505,9 +504,11 @@ int main(int argc, char* argv[]) {
 #if HAVE_DECL_IP_TRANSPARENT
 		int value = 1;
 		s_listen.setsockopt(SOL_IP, IP_TRANSPARENT, &value, sizeof(value));
+		//We do not want to buffer small packets, which could increase latency/gitter
+		//for real time applications. Let them go out as as they came in!!
 		s_listen.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &value, sizeof(value));
 		//Take care of socks hanging in Established state
-		s_listen.setsockopt(SOL_SOCKET,SO_KEEPALIVE, &value, sizeof(value));
+		s_listen.setsockopt(SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
 #endif
 
 		/* TRANSLATORS: %1$s contains the listening address
