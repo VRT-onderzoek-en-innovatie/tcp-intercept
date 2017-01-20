@@ -50,7 +50,7 @@ TCP keepalive support
 ------------------------
 Inorder to benefit from the TCP-keepalive functionality, you need to enable 
 kernel support. Without this functionality, tcp-intercept has no way of 
-cleaning up connections that hang becasue on of the peers lost connectivity 
+cleaning up connections that hang becasue one of the peers lost connectivity 
 without tcp-inntercept being aware of it.
 
 You may use the procfs or sysctl interface to configure the kernel parameters.
