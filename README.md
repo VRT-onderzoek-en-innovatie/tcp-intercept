@@ -46,6 +46,38 @@ make
 sudo make install
 ```
 
+TCP keepalive support
+------------------------
+Inorder to benefit from the TCP-keepalive functionality, you need to enable 
+kernel support. Without this functionality, tcp-intercept has no way of 
+cleaning up connections that hang becasue one of the peers lost connectivity 
+without tcp-inntercept being aware of it. Should you wish to have this feature 
+enabled (default is disabled), please start tcp-intercept with the keepalive 
+option (-k).
+
+You may use the procfs or sysctl interface to configure the kernel parameters.
+
+procfs:
+ * /proc/sys/net/ipv4/tcp_keepalive_time
+ * /proc/sys/net/ipv4/tcp_keepalive_intvl
+ * /proc/sys/net/ipv4/tcp_keepalive_probes
+ 
+sysctl:
+ * net.ipv4.tcp_keepalive_time
+ * net.ipv4.tcp_keepalive_intvl
+ * net.ipv4.tcp_keepalive_probes
+
+
+TCP_NODELAY (no Nagel) support
+-----------------------
+tcp-intercept can disable (optionally) the Nagel-Algorithm used by TCP. TCP by default 
+tries to optimise utilization of the network. In doing so, it buffers data segments 
+(smaller than an MSS), until it reaches the MSS or it receives an ACK message for its 
+sent data segments, and sends them out as one big segment. This way it avoids the 
+frequent sending of small segments that could waste bandwidth. On the contrary, this 
+could have a negative effect on latency/jitter sensitive applications (real time apps). 
+Should you wish to have this feature enabled (default is disabled), please start 
+tcp-intercept with the TCP_NODELAY option (-n).
 
 iptables setup
 -------------

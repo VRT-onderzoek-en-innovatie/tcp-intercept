@@ -16,6 +16,7 @@
 #include "../Socket/Socket.hxx"
 #include <libsimplelog.h>
 #include <libdaemon/daemon.h>
+#include <netinet/tcp.h>
 
 std::string logfilename;
 FILE *logfile;
@@ -24,6 +25,8 @@ static const int MAX_CONN_BACKLOG = 32;
 
 std::auto_ptr<SockAddr::SockAddr> bind_listen_addr;
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
+bool keepalive = false;
+bool nodelay = false;
 
 struct connection {
 	std::string id;
@@ -242,6 +245,18 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 	std::auto_ptr<SockAddr::SockAddr> server_addr;
 	try {
 		new_con->s_client = s_listen->accept(&client_addr);
+		//We do not want to buffer small packets, which could increase latency/jitter
+		//for real time applications. Let them go out as they came in!!
+		if(nodelay){
+			int val = 1;
+			new_con->s_client.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
+		}
+		//Take care of socks hanging in ESTABLISHED/CLOSE_WAIT/FIN_WAIT2 states		
+		if(keepalive){
+			int val = 1;
+			new_con->s_client.setsockopt(SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
+			//LogInfo(_("%1$s: Enabling keepalive on s_client"), new_con->id.c_str());
+		}
 
 		server_addr = new_con->s_client.getsockname();
 
@@ -264,7 +279,16 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		LogInfo(_("%1$s: Connection intercepted"), new_con->id.c_str());
 
 		new_con->s_server = Socket::socket(server_addr->addr_family(), SOCK_STREAM, 0);
-
+		if(nodelay){
+			int val = 1;
+			new_con->s_server.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
+		}
+		if(keepalive){
+			int val = 1;
+			new_con->s_server.setsockopt(SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
+			//LogInfo(_("%1$s: Enabling keepalive on s_server"), new_con->id.c_str());		
+		}
+		
 		if( bind_addr_outgoing.get() != NULL ) {
 			new_con->s_server.bind( *bind_addr_outgoing );
 		} else {
@@ -274,7 +298,6 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 #endif
 			new_con->s_server.bind( *client_addr );
 		}
-
 		new_con->s_server.non_blocking(true);
 	} catch( Errno &e ) {
 		LogError(_("Error: %s"), e.what());
@@ -347,10 +370,12 @@ int main(int argc, char* argv[]) {
 		};
 
 	{ // Parse options
-		char optstring[] = "hVfp:b:B:l:";
+		char optstring[] = "hVknfp:b:B:l:";
 		struct option longopts[] = {
 			{"help",			no_argument, NULL, 'h'},
 			{"version",			no_argument, NULL, 'V'},
+			{"keepalive",		no_argument, NULL, 'k'},
+			{"tcp_nodelay",		no_argument, NULL, 'n'},
 			{"foreground",		no_argument, NULL, 'f'},
 			{"pid-file",		required_argument, NULL, 'p'},
 			{"bind-listen",		required_argument, NULL, 'b'},
@@ -369,6 +394,8 @@ int main(int argc, char* argv[]) {
 					"Options:\n"
 					"  -h --help                       Displays this help message and exits\n"
 					"  -V --version                    Displays the version and exits\n"
+					"  -k --keepalive                  Enable keepalive on the sockets\n"
+					"  -n --tcp_nodelay                Disable Nagel's Algorithm on the sockets\n"
 					"  -f --foreground                 Don't fork and detach\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
 					"                                  usefull when running as a daemon. Must be an\n"
@@ -406,6 +433,12 @@ int main(int argc, char* argv[]) {
 #endif
 				         );
 				exit(EX_OK);
+			case 'k':
+				keepalive = true;
+				break;
+			case 'n':
+				nodelay = true;
+				break;
 			case 'f':
 				options.fork = false;
 				break;
