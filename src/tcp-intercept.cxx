@@ -22,11 +22,11 @@ std::string logfilename;
 FILE *logfile;
 
 static const int MAX_CONN_BACKLOG = 32;
-bool KEEPALIVE = false;
-bool NODELAY = false;
 
 std::auto_ptr<SockAddr::SockAddr> bind_listen_addr;
 std::auto_ptr<SockAddr::SockAddr> bind_addr_outgoing;
+bool keepalive = false;
+bool nodelay = false;
 
 struct connection {
 	std::string id;
@@ -247,12 +247,12 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		new_con->s_client = s_listen->accept(&client_addr);
 		//We do not want to buffer small packets, which could increase latency/jitter
 		//for real time applications. Let them go out as they came in!!
-		if(NODELAY){
+		if(nodelay){
 			int val = 1;
 			new_con->s_client.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
 		}
 		//Take care of socks hanging in ESTABLISHED/CLOSE_WAIT/FIN_WAIT2 states		
-		if(KEEPALIVE){
+		if(keepalive){
 			int val = 1;
 			new_con->s_client.setsockopt(SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
 			//LogInfo(_("%1$s: Enabling keepalive on s_client"), new_con->id.c_str());
@@ -279,14 +279,14 @@ static void listening_socket_ready_for_read(EV_P_ ev_io *w, int revents) {
 		LogInfo(_("%1$s: Connection intercepted"), new_con->id.c_str());
 
 		new_con->s_server = Socket::socket(server_addr->addr_family(), SOCK_STREAM, 0);
-		if(KEEPALIVE){
+		if(nodelay){
+			int val = 1;
+			new_con->s_server.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
+		}
+		if(keepalive){
 			int val = 1;
 			new_con->s_server.setsockopt(SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
 			//LogInfo(_("%1$s: Enabling keepalive on s_server"), new_con->id.c_str());		
-		}
-		if(NODELAY){
-			int val = 1;
-			new_con->s_server.setsockopt(IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
 		}
 		
 		if( bind_addr_outgoing.get() != NULL ) {
@@ -394,8 +394,8 @@ int main(int argc, char* argv[]) {
 					"Options:\n"
 					"  -h --help                       Displays this help message and exits\n"
 					"  -V --version                    Displays the version and exits\n"
-					"  -k --SO_KEEPALIVE               Enable keepalive on the sockets\n"
-					"  -n --TCP_NODELAY                Disable Nagel Algorithm on the sockets\n"
+					"  -k --keepalive                  Enable keepalive on the sockets\n"
+					"  -n --tcp_nodelay                Disable Nagel's Algorithm on the sockets\n"
 					"  -f --foreground                 Don't fork and detach\n"
 					"  --pid-file -p file              The file to write the PID to, especially\n"
 					"                                  usefull when running as a daemon. Must be an\n"
@@ -434,10 +434,10 @@ int main(int argc, char* argv[]) {
 				         );
 				exit(EX_OK);
 			case 'k':
-				KEEPALIVE = true;
+				keepalive = true;
 				break;
 			case 'n':
-				NODELAY = true;
+				nodelay = true;
 				break;
 			case 'f':
 				options.fork = false;
