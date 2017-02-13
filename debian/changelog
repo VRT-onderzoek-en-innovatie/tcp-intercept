@@ -1,8 +1,14 @@
-tcp-intercept (1.0.3) UNRELEASED; urgency=low
+tcp-intercept (1.1.1) UNRELEASED; urgency=low
 
   * 
 
- -- Niels Laukens <niels.laukens@vrt.be>  Mon, 5 Oct 2015 10:17:03 +0200
+ -- Niels Laukens <niels.laukens@vrt.be>  Mon, 13 Feb 2017 11:25:03 +0100
+
+tcp-intercept (1.1.0) unstable; urgency=low
+
+  * Add option to use TCP_NODELAY and SO_KEEPALIVE (by Maedot Desta)
+
+ -- Niels Laukens <niels.laukens@vrt.be>  Mon, 13 Feb 2017 11:25:03 +0100
 
 tcp-intercept (1.0.2) unstable; urgency=low
 
